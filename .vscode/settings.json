@@ -1,0 +1,7 @@
+{
+  "material-icon-theme.folders.associations": {
+    "filesystem": "docs",
+    "codegen": "generator",
+    "function_registry": "functions",
+  }
+}

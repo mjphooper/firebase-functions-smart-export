@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import { REGISTRY_FILE_NAME } from "../constants/registry_file_name.js";
+
+/**
+ * Deletes the existing registry file if it exists.
+ */
+export function deleteRegistryFile(): void {
+  if (fs.existsSync(REGISTRY_FILE_NAME)) {
+    fs.unlinkSync(REGISTRY_FILE_NAME);
+  }
+}
