@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "outDir": "",
+    "sourceMap": false,
+    "strict": true,
+    "strictNullChecks": false,
+    "skipLibCheck": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "isolatedModules": true
+  },
+  "include": [
+    "src/cli",
+    "src/shared",
+  ],
+  "exclude": [
+    "src/runtime",
+  ]
+}

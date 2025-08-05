@@ -1,0 +1,63 @@
+{
+  "name": "firebase-functions-smart-export",
+  "description": "Smart, dynamic exporting to speed up Firebase Functions. Fully ESM compatible",
+  "author": "Matt Hooper <email goes here> (matthooper.dev)",
+  "version": "0.0.0",
+  "private": true,
+  "keywords": [
+    "firebase",
+    "functions",
+    "cold",
+    "start",
+    "codegen",
+    "dynamic",
+    "export",
+    "fast",
+    "speed",
+    "esm"
+  ],
+  "files": [
+    "lib/",
+    "bin/"
+  ],
+  "homepage": "https://<organization/user>.github.io/<project>/",
+  "repository": "https://github.com/<organization/user>/<project>.git",
+  "bin": {
+    "ffse": "./bin/ffse.js",
+    "firebase-functions-smart-export": "./bin/ffse.js"
+  },
+  "scripts": {
+    "build": "rm -r -f dist && rm -r -f cli && tsc && npm run esbuild:src",
+    "esbuild:src": "esbuild src/runtime/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js --format=esm --external:firebase-functions",
+    "visualize": "tree -I 'node_modules' -o project_tree.txt",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest"
+  },
+  "main": "lib/index.js",
+  "type": "module",
+  "types": "lib/index.d.ts",
+  "dependencies": {
+    "chalk": "^5.5.0",
+    "dlv": "^1.1.3",
+    "dset": "^3.1.4",
+    "fast-glob": "^3.3.3",
+    "change-case": "^5.4.4",
+    "ts-morph": "^26.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.32.0",
+    "@types/dlv": "^1.1.5",
+    "@types/jest": "^30.0.0",
+    "esbuild": "^0.25.8",
+    "eslint": "^9.32.0",
+    "jest": "^30.0.5",
+    "ts-jest": "^29.4.1",
+    "ts-jest-resolver": "^2.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.38.0"
+  },
+  "peerDependencies": {
+    "firebase-functions": "^6.4.0"
+  },
+  "license": "MIT"
+}
