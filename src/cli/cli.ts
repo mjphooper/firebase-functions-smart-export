@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import { argv } from 'process';
 import { flattenFunctionRegistry } from '../shared/flatten_function_registry.js';
 import { getAbsProjectRootPath } from '../shared/project_root_path.js';
@@ -20,9 +19,9 @@ Usage:
   npx ffse [options]
 
 Options:
-  ${chalk.cyan('--dry-run')}     Print output without writing files
-  ${chalk.cyan('--verbose')}     Show extra logs
-  ${chalk.cyan('--help')}        Show this message
+  \x1b[36m--dry-run\x1b[0m     Print output without writing files
+  \x1b[36m--verbose\x1b[0m     Show extra logs
+  \x1b[36m--help\x1b[0m        Show this message
 `;
 
 function parseCliFlags(argv: string[]) {
