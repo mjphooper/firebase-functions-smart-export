@@ -1,2 +1,10 @@
+# Ignore built files
+cli/
+dist/
+shared/
+
+# Ignore dependency files
 node_modules/
+
+
 .DS_Store
