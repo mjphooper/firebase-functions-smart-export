@@ -1,18 +1,16 @@
 import fs from 'node:fs';
-import { getAbsGeneratedIndexPath } from './abs_generated_index_path.js';
+import { join } from 'node:path';
+import { GENERATED_INDEX_FILE_NAME } from '../constants/generated_index_file_name.js';
+import { getPreferredSourceDir } from './preferred_source_dir.js';
 
 
 /**
  * Deletes the generated index file if it exists.
  *
- * This function removes the previously generated index file,
- * if one is present at the configured path. It should be run
- * before regeneration to avoid stale or partial output.
- *
  * This operation is silent if the file does not exist.
  */
 export async function deleteIndexFile(): Promise<void> {
-  const indexPath = await getAbsGeneratedIndexPath();
+  const indexPath = join(getPreferredSourceDir(), GENERATED_INDEX_FILE_NAME);
   if (fs.existsSync(indexPath)) {
     fs.unlinkSync(indexPath);
   }

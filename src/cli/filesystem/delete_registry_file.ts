@@ -3,6 +3,8 @@ import { REGISTRY_FILE_NAME } from "../constants/registry_file_name.js";
 
 /**
  * Deletes the existing registry file if it exists.
+ * 
+ * This operation is silent if the file does not exist.
  */
 export function deleteRegistryFile(): void {
   if (fs.existsSync(REGISTRY_FILE_NAME)) {
