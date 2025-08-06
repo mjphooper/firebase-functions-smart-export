@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import { join } from 'path';
 import { argv } from 'process';
-import { Project, ScriptKind } from 'ts-morph';
 import { flattenFunctionRegistry } from '../shared/flatten_function_registry.js';
 import { getAbsProjectRootPath } from '../shared/project_root_path.js';
 import { styledConsoleOutput } from '../shared/styled_console_log.js';
@@ -100,17 +99,16 @@ export async function main() {
       process.exit(0);
     }
 
-    const indexFile = new Project().createSourceFile(
-      await getAbsGeneratedIndexPath(),
-      undefined,
-      { scriptKind: ScriptKind.JS, overwrite: true },
-    );
 
     generateRegistryFile('', registry);
 
     if (verbose) styledConsoleOutput.info(`Generated "${REGISTRY_FILE_NAME}".`)
 
-    await generateIndexFile(indexFile, registry, config);
+    await generateIndexFile(
+      await getAbsGeneratedIndexPath(),
+      registry,
+      config,
+    );
 
     if (verbose) styledConsoleOutput.info(`Generated "${GENERATED_INDEX_FILE_NAME}".`)
 

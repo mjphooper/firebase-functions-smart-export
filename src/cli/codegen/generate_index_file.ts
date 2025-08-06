@@ -1,5 +1,5 @@
-
-import { SourceFile } from 'ts-morph';
+import fs from 'node:fs';
+import path from 'node:path';
 import { calculateRegistrySize } from '../../shared/calculate_registry_size.js';
 import type { Config } from '../../shared/types/config.js';
 import type { FunctionRegistry } from '../../shared/types/function_registry.js';
@@ -33,63 +33,39 @@ function getQuoteWrapperFor(config: Config): StringTransformer {
   return (text: string) => `${quoteCharacter}${text}${quoteCharacter}`;
 }
 
-/**
- * Writes import statements and initializes the export map in the generated index file.
- *
- * @param file The source file being generated.
- * @param config The resolved configuration used to determine import style.
- */
-function writeImportsAndSetup(file: SourceFile, config: Config) {
+function writeImportsAndSetup(config: Config): string {
   const quote = getQuoteWrapperFor(config);
-  file.addStatements([
+  return [
     '// GENERATED CODE - DO NOT MODIFY BY HAND',
     `import { createExportMap } from ${quote('firebase-functions-smart-export')};`,
     `import registry from ${quote(`./../${REGISTRY_FILE_NAME}`)} with { type: ${quote('json')} };`,
-    '\n',
+    '',
     `const exportMap = await createExportMap(registry);`,
-  ]);
+    ''
+  ].join('\n');
 }
 
-/**
- * Writes named exports to the index file for each top-level key in the function registry.
- *
- * @param file The source file being generated.
- * @param registry The function registry mapping identifiers to file paths.
- * @param config The resolved configuration used to determine quoting style.
- */
-function writeExports(
-  file: SourceFile,
-  registry: FunctionRegistry,
-) {
-  const statements: string[] = ['\n'];
-
+function writeExports(registry: FunctionRegistry): string {
+  const lines: string[] = [];
   for (const topLevelGroupOrName of Object.keys(registry)) {
-    statements.push(
-      `export const ${topLevelGroupOrName} = exportMap.${topLevelGroupOrName};`,
-    )
+    lines.push(`export const ${topLevelGroupOrName} = exportMap.${topLevelGroupOrName};`);
   }
-
-  file.addStatements(statements);
+  return lines.join('\n');
 }
 
-/**
- * Generates the `index.gen.js` file based on the provided non-empty function registry
- * and configuration.
- * 
- * @throws Error if the registry is empty.
- */
 export async function generateIndexFile(
-  file: SourceFile,
+  filePath: string,
   registry: FunctionRegistry,
   config: Config,
 ): Promise<void> {
-
   if (calculateRegistrySize(registry) === 0) {
     throw Error(EMPTY_REGISTRY_ERROR_MESSAGE);
   }
 
-  writeImportsAndSetup(file, config);
-  writeExports(file, registry);
+  const contents = [
+    writeImportsAndSetup(config),
+    writeExports(registry)
+  ].join('\n\n');
 
-  file.saveSync();
+  fs.writeFileSync(path.resolve(filePath), contents, 'utf8');
 }

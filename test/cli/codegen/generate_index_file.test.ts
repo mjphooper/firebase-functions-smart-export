@@ -1,28 +1,38 @@
-import { Project, SourceFile } from 'ts-morph';
+import fs from 'fs';
+import { dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
+import { GENERATED_INDEX_FILE_NAME } from '../../../cli/constants/generated_index_file_name.js';
 import { EMPTY_REGISTRY_ERROR_MESSAGE, generateIndexFile } from '../../../src/cli/codegen/generate_index_file.js';
 import { Config } from '../../../src/shared/types/config.js';
 import { FunctionReference, FunctionRegistry } from '../../../src/shared/types/function_registry.js';
 
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const tempFixturesDir = resolve(__dirname, '../temp_fixtures')
+const testIndexFilePath = resolve(tempFixturesDir, GENERATED_INDEX_FILE_NAME);
+
+function readGeneratedFile() {
+  return fs.readFileSync(testIndexFilePath, 'utf8');
+}
+
 describe('generateIndexFile()', () => {
-  const project = new Project({ useInMemoryFileSystem: true });
   const doubleQuoteConfig: Config = { useSingleQuotes: false };
   const emptyReference: FunctionReference = [''];
 
-  let file: SourceFile;
-
   beforeEach(() => {
-    file = project.createSourceFile('index.gen.js', '', { overwrite: true });
+    fs.mkdirSync(tempFixturesDir);
+  });
+
+  afterEach(async () => {
+    await fs.promises.rmdir(tempFixturesDir, { recursive: true });
   });
 
   test('throws if the function registry is empty', async () => {
     // Arrange
     const registry: FunctionRegistry = {};
-    const file = new Project({ useInMemoryFileSystem: true })
-      .createSourceFile('index.gen.js', '');
 
     // Act & Assert
-    await expect(generateIndexFile(file, registry, doubleQuoteConfig)).rejects.toThrow(
+    await expect(generateIndexFile(testIndexFilePath, registry, doubleQuoteConfig)).rejects.toThrow(
       EMPTY_REGISTRY_ERROR_MESSAGE
     );
   });
@@ -32,10 +42,10 @@ describe('generateIndexFile()', () => {
     const registry: FunctionRegistry = { foo: emptyReference };
 
     // Act
-    await generateIndexFile(file, registry, doubleQuoteConfig);
+    await generateIndexFile(testIndexFilePath, registry, doubleQuoteConfig);
 
     // Expect
-    const content = file.getFullText();
+    const content = readGeneratedFile();
     expect(content).toContain('import { createExportMap } from "firebase-functions-smart-export";');
     expect(content).toContain('const exportMap = await createExportMap(registry);');
   });
@@ -50,10 +60,10 @@ describe('generateIndexFile()', () => {
     };
 
     // Act
-    await generateIndexFile(file, registry, doubleQuoteConfig);
+    await generateIndexFile(testIndexFilePath, registry, doubleQuoteConfig);
 
     // Assert
-    const content = file.getFullText();
+    const content = readGeneratedFile();
     expect(content).toContain('export const foo = exportMap.foo;');
     expect(content).toContain('export const bar = exportMap.bar;');
   });
@@ -62,9 +72,9 @@ describe('generateIndexFile()', () => {
     const registry: FunctionRegistry = { foo: emptyReference };
     const config: Config = { useSingleQuotes: true };
 
-    await generateIndexFile(file, registry, config);
+    await generateIndexFile(testIndexFilePath, registry, config);
 
-    const content = file.getFullText();
+    const content = readGeneratedFile();
     expect(content).toContain(`import { createExportMap } from 'firebase-functions-smart-export';`);
   });
 });
