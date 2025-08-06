@@ -17,8 +17,9 @@
     "esm"
   ],
   "files": [
-    "lib/",
-    "bin/"
+    "bin/",
+    "cli/",
+    "dist/"
   ],
   "homepage": "https://<organization/user>.github.io/<project>/",
   "repository": "https://github.com/<organization/user>/<project>.git",
