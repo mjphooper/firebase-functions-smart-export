@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   update-pre-publish:
     runs-on: ubuntu-latest
