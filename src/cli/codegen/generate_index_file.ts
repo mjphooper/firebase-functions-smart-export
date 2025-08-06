@@ -1,8 +1,9 @@
 import fs from 'node:fs';
-import path from 'node:path';
+import { join } from 'node:path';
 import { calculateRegistrySize } from '../../shared/calculate_registry_size.js';
 import type { Config } from '../../shared/types/config.js';
 import type { FunctionRegistry } from '../../shared/types/function_registry.js';
+import { GENERATED_INDEX_FILE_NAME } from '../constants/generated_index_file_name.js';
 import { REGISTRY_FILE_NAME } from '../constants/registry_file_name.js';
 
 
@@ -54,7 +55,7 @@ function writeExports(registry: FunctionRegistry): string {
 }
 
 export async function generateIndexFile(
-  filePath: string,
+  preferredSourceDir: string,
   registry: FunctionRegistry,
   config: Config,
 ): Promise<void> {
@@ -67,5 +68,5 @@ export async function generateIndexFile(
     writeExports(registry)
   ].join('\n\n');
 
-  fs.writeFileSync(path.resolve(filePath), contents, 'utf8');
+  fs.writeFileSync(join(preferredSourceDir, GENERATED_INDEX_FILE_NAME), contents, 'utf8');
 }
