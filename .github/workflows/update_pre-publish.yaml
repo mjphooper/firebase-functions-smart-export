@@ -1,0 +1,44 @@
+name: Update Pre-Publish Branch
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update-pre-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history needed for force push
+          ref: main
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript and bundle with esbuild
+        run: npm run build
+
+      - name: Create pre-publish README on the fly
+        run: |
+          echo "# Pre-publish branch" > README.md
+          echo "" >> README.md
+          echo "This branch contains compiled output for GitHub installs prior to npm publish." >> README.md
+          echo "It will be deleted once the package is published to npm." >> README.md
+
+      - name: Commit and push to pre-publish branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B pre-publish
+          git add -f dist README.md
+          git commit -m "ci: update pre-publish branch from main [auto]"
+          git push -f origin pre-publish
