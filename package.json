@@ -34,7 +34,7 @@
     "visualize": "tree -I 'node_modules' -o project_tree.txt",
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest"
   },
-  "main": "lib/index.js",
+  "main": "dist/index.js",
   "type": "module",
   "types": "lib/index.d.ts",
   "dependencies": {
