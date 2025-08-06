@@ -1,5 +1,5 @@
-import { Config } from "../../shared/types/config.js";
-import { FunctionExportKey, FunctionId } from "../../shared/types/function_id.js";
+import type { Config } from "../../shared/types/config.js";
+import type { FunctionExportKey, FunctionId } from "../../shared/types/function_id.js";
 /**
  * Converts a relative file path into a camelCase export key used for exporting functions.
  *

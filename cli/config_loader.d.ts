@@ -1,4 +1,4 @@
-import { Config } from '../shared/types/config.js';
+import type { Config } from '../shared/types/config.js';
 /** The name of the user created configuration file. */
 export declare const CONFIG_FILE_NAME = "ffse.config.js";
 /**

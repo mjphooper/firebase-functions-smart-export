@@ -1,5 +1,5 @@
-import { FunctionId } from "./types/function_id.js";
-import { FunctionReference, FunctionRegistry, isFunctionReference } from "./types/function_registry.js";
+import type { FunctionId } from "./types/function_id.js";
+import { type FunctionReference, type FunctionRegistry, isFunctionReference } from "./types/function_registry.js";
 
 /**
  * Recursively flattens a nested FunctionRegistry object into a flat map where keys

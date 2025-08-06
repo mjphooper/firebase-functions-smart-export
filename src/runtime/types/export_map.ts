@@ -1,4 +1,4 @@
-import { FunctionGroupOrName } from "../../shared/types/function_id";
+import type { FunctionGroupOrName } from "../../shared/types/function_id";
 
 /**
  * A nested object similar in structure to {@link FunctionRegistry} except each leaf is either:

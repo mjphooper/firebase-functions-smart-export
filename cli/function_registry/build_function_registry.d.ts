@@ -1,5 +1,5 @@
-import { Config } from '../../shared/types/config.js';
-import { FunctionRegistry } from '../../shared/types/function_registry.js';
+import type { Config } from '../../shared/types/config.js';
+import type { FunctionRegistry } from '../../shared/types/function_registry.js';
 /**
  * Builds a FunctionRegistry by scanning the compiled `lib/` directory for function files.
  *
