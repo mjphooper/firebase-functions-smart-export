@@ -42,6 +42,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -B pre-publish
-          git add -f dist README.md
+          git add -f dist cli shared README.md
           git commit -m "ci: update pre-publish branch from main [auto]"
           git push -f origin pre-publish
