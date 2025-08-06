@@ -6,5 +6,7 @@ shared/
 # Ignore dependency files
 node_modules/
 
+# IDE files
+.vscode/
 
 .DS_Store
