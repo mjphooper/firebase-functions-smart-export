@@ -1,6 +1,6 @@
 import { camelCase } from "change-case";
-import { Config } from "../../shared/types/config.js";
-import { FunctionExportKey, FunctionId } from "../../shared/types/function_id.js";
+import type { Config } from "../../shared/types/config.js";
+import type { FunctionExportKey, FunctionId } from "../../shared/types/function_id.js";
 import { transformGroups } from "./transform_groups.js";
 
 /**

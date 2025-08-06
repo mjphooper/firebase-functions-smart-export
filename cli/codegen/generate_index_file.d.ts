@@ -1,6 +1,6 @@
 import { SourceFile } from 'ts-morph';
-import { Config } from '../../shared/types/config.js';
-import { FunctionRegistry } from '../../shared/types/function_registry.js';
+import type { Config } from '../../shared/types/config.js';
+import type { FunctionRegistry } from '../../shared/types/function_registry.js';
 export declare const EMPTY_REGISTRY_ERROR_MESSAGE = "Cannot generate an `index.gen.js` for an empty registry.";
 /**
  * Generates the `index.gen.js` file based on the provided non-empty function registry

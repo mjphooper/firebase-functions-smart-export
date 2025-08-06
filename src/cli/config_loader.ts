@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import { styledConsoleOutput } from '../shared/styled_console_log.js';
-import { Config } from '../shared/types/config.js';
+import type { Config } from '../shared/types/config.js';
 
 /** The name of the user created configuration file. */
 export const CONFIG_FILE_NAME = 'ffse.config.js';

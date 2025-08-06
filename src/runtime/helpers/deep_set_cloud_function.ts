@@ -1,7 +1,7 @@
 import { dset } from 'dset/merge';
 import { join } from 'path';
 import { getAbsProjectRootPath } from "../../shared/project_root_path";
-import { FunctionReference } from "../../shared/types/function_registry";
+import type { FunctionReference } from "../../shared/types/function_registry";
 import { importCloudFunction } from './import_cloud_function';
 
 

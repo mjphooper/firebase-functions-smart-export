@@ -1,7 +1,7 @@
 import dlv from 'dlv';
 import { dset } from 'dset';
-import { Config } from '../../shared/types/config.js';
-import { FunctionReference, FunctionRegistry } from '../../shared/types/function_registry.js';
+import type { Config } from '../../shared/types/config.js';
+import type { FunctionReference, FunctionRegistry } from '../../shared/types/function_registry.js';
 import { parseExportKeyFromPath, parseFunctionIdFromPath } from './function_path_parser.js';
 
 /**

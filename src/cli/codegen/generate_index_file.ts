@@ -1,8 +1,8 @@
 
 import { SourceFile } from 'ts-morph';
 import { calculateRegistrySize } from '../../shared/calculate_registry_size.js';
-import { Config } from '../../shared/types/config.js';
-import { FunctionRegistry } from '../../shared/types/function_registry.js';
+import type { Config } from '../../shared/types/config.js';
+import type { FunctionRegistry } from '../../shared/types/function_registry.js';
 import { REGISTRY_FILE_NAME } from '../constants/registry_file_name.js';
 
 

@@ -1,4 +1,4 @@
-import { FunctionGroupOrName } from './function_id.js';
+import type { FunctionGroupOrName } from './function_id.js';
 /**
  * A reference to a user-defined function.
  *

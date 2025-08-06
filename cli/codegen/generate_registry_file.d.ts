@@ -1,4 +1,4 @@
-import { FunctionRegistry } from '../../shared/types/function_registry.js';
+import type { FunctionRegistry } from '../../shared/types/function_registry.js';
 /**
  * Writes the given function registry object as a formatted JSON file to disk.
  *

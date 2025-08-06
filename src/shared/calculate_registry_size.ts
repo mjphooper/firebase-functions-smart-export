@@ -1,4 +1,4 @@
-import { FunctionRegistry, isFunctionReference } from "./types/function_registry.js";
+import { type FunctionRegistry, isFunctionReference } from "./types/function_registry.js";
 
 /**
  * Returns the number of functions in the given registry.

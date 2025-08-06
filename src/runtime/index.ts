@@ -3,7 +3,7 @@ import { flattenFunctionRegistry } from "../shared/flatten_function_registry";
 import { FunctionReference, FunctionRegistry } from "../shared/types/function_registry";
 import { deepSetCloudFunction } from "./helpers/deep_set_cloud_function";
 import { getInstanceTargetId } from "./helpers/get_instance_target_id";
-import { ExportMap } from "./types/export_map";
+import type { ExportMap } from "./types/export_map";
 
 
 /**

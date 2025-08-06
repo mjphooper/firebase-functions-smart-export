@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { join } from 'path';
-import { FunctionRegistry } from '../../shared/types/function_registry.js';
+import type { FunctionRegistry } from '../../shared/types/function_registry.js';
 import { REGISTRY_FILE_NAME } from '../constants/registry_file_name.js';
 
 /**
