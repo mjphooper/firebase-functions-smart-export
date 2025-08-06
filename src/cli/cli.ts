@@ -1,5 +1,4 @@
 import chalk from 'chalk';
-import { join } from 'path';
 import { argv } from 'process';
 import { flattenFunctionRegistry } from '../shared/flatten_function_registry.js';
 import { getAbsProjectRootPath } from '../shared/project_root_path.js';
@@ -9,10 +8,10 @@ import { generateRegistryFile } from './codegen/generate_registry_file.js';
 import { getConfig } from './config_loader.js';
 import { GENERATED_INDEX_FILE_NAME } from './constants/generated_index_file_name.js';
 import { REGISTRY_FILE_NAME } from './constants/registry_file_name.js';
-import { getAbsGeneratedIndexPath } from './filesystem/abs_generated_index_path.js';
 import { deleteIndexFile } from './filesystem/delete_index_file.js';
 import { deleteRegistryFile } from './filesystem/delete_registry_file.js';
 import { findFunctionFiles } from './filesystem/find_function_files.js';
+import { getPreferredSourceDir } from './filesystem/preferred_source_dir.js';
 import { buildFunctionRegistry } from './function_registry/build_function_registry.js';
 
 
@@ -57,13 +56,11 @@ export async function main() {
       );
     }
 
-    const globWorkingDirectory = join(getAbsProjectRootPath(), 'lib');
-
     if (verbose) {
-      styledConsoleOutput.info(`Searching '${globWorkingDirectory}' for ".function.js" files...`);
+      styledConsoleOutput.info(`Searching '${getPreferredSourceDir()}' for ".function" files...`);
     }
 
-    const files = findFunctionFiles(globWorkingDirectory, config.matchExtension);
+    const files = findFunctionFiles(getPreferredSourceDir(), config.matchExtension);
 
     if (verbose) {
       styledConsoleOutput.info(`${files.length} file(s) found.`);
@@ -105,7 +102,7 @@ export async function main() {
     if (verbose) styledConsoleOutput.info(`Generated "${REGISTRY_FILE_NAME}".`)
 
     await generateIndexFile(
-      await getAbsGeneratedIndexPath(),
+      getPreferredSourceDir(),
       registry,
       config,
     );
