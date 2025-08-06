@@ -16,7 +16,7 @@ export async function deepSetCloudFunction(
   exportMap: Record<string, unknown>,
 ) {
   const [relPath, exportKey] = reference;
-  const absPath = join(getAbsProjectRootPath(), 'lib', relPath);
+  const absPath = join(getAbsProjectRootPath(), relPath);
   const cloudFunction = await importCloudFunction(absPath);
 
   dset(
