@@ -1,6 +1,6 @@
 import { argv } from 'process';
 import { flattenFunctionRegistry } from '../shared/flatten_function_registry.js';
-import { getAbsProjectRootPath } from '../shared/project_root_path.js';
+import { getAbsProjectRootPath, getAbsSourceDirPath } from '../shared/paths.js';
 import { styledConsoleOutput } from '../shared/styled_console_log.js';
 import { generateIndexFile } from './codegen/generate_index_file.js';
 import { generateRegistryFile } from './codegen/generate_registry_file.js';
@@ -10,7 +10,6 @@ import { REGISTRY_FILE_NAME } from './constants/registry_file_name.js';
 import { deleteIndexFile } from './filesystem/delete_index_file.js';
 import { deleteRegistryFile } from './filesystem/delete_registry_file.js';
 import { findFunctionFiles } from './filesystem/find_function_files.js';
-import { getPreferredSourceDir } from './filesystem/preferred_source_dir.js';
 import { buildFunctionRegistry } from './function_registry/build_function_registry.js';
 
 
@@ -47,7 +46,13 @@ export async function main() {
     deleteRegistryFile();
     deleteIndexFile();
 
-    const config = await getConfig(getAbsProjectRootPath());
+    const absRootPath = getAbsProjectRootPath();
+    const absSourcePath = getAbsSourceDirPath();
+
+    styledConsoleOutput.info(`Resolved source code path to: ${absSourcePath}`);
+
+    const config = await getConfig(absRootPath);
+
 
     if (verbose) {
       styledConsoleOutput.info(
@@ -56,10 +61,10 @@ export async function main() {
     }
 
     if (verbose) {
-      styledConsoleOutput.info(`Searching '${getPreferredSourceDir()}' for ".function" files...`);
+      styledConsoleOutput.info(`Searching '${absSourcePath}' for ".function" files...`);
     }
 
-    const files = findFunctionFiles(getPreferredSourceDir(), config.matchExtension);
+    const files = findFunctionFiles(absSourcePath, config.matchExtension);
 
     if (verbose) {
       styledConsoleOutput.info(`${files.length} file(s) found.`);
@@ -101,7 +106,7 @@ export async function main() {
     if (verbose) styledConsoleOutput.info(`Generated "${REGISTRY_FILE_NAME}".`)
 
     await generateIndexFile(
-      getPreferredSourceDir(),
+      absSourcePath,
       registry,
       config,
     );
