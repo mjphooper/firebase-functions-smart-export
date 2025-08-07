@@ -1,7 +1,7 @@
 # Ignore built files
 cli/
 dist/
-shared/
+/shared/
 
 # Ignore dependency files
 node_modules/
