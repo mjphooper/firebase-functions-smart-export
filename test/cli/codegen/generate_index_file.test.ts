@@ -8,11 +8,10 @@ import { FunctionReference, FunctionRegistry } from '../../../src/shared/types/f
 
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const tempFixturesDir = resolve(__dirname, '../temp_fixtures')
-const testIndexFilePath = resolve(tempFixturesDir, GENERATED_INDEX_FILE_NAME);
+const testDir = resolve(__dirname, '../temp_fixtures')
 
 function readGeneratedFile() {
-  return fs.readFileSync(testIndexFilePath, 'utf8');
+  return fs.readFileSync(resolve(testDir, GENERATED_INDEX_FILE_NAME), 'utf8');
 }
 
 describe('generateIndexFile()', () => {
@@ -20,11 +19,11 @@ describe('generateIndexFile()', () => {
   const emptyReference: FunctionReference = [''];
 
   beforeEach(() => {
-    fs.mkdirSync(tempFixturesDir);
+    fs.mkdirSync(testDir);
   });
 
   afterEach(async () => {
-    await fs.promises.rmdir(tempFixturesDir, { recursive: true });
+    await fs.promises.rmdir(testDir, { recursive: true });
   });
 
   test('throws if the function registry is empty', async () => {
@@ -32,7 +31,7 @@ describe('generateIndexFile()', () => {
     const registry: FunctionRegistry = {};
 
     // Act & Assert
-    await expect(generateIndexFile(testIndexFilePath, registry, doubleQuoteConfig)).rejects.toThrow(
+    await expect(generateIndexFile(testDir, registry, doubleQuoteConfig)).rejects.toThrow(
       EMPTY_REGISTRY_ERROR_MESSAGE
     );
   });
@@ -42,7 +41,7 @@ describe('generateIndexFile()', () => {
     const registry: FunctionRegistry = { foo: emptyReference };
 
     // Act
-    await generateIndexFile(testIndexFilePath, registry, doubleQuoteConfig);
+    await generateIndexFile(testDir, registry, doubleQuoteConfig);
 
     // Expect
     const content = readGeneratedFile();
@@ -60,7 +59,7 @@ describe('generateIndexFile()', () => {
     };
 
     // Act
-    await generateIndexFile(testIndexFilePath, registry, doubleQuoteConfig);
+    await generateIndexFile(testDir, registry, doubleQuoteConfig);
 
     // Assert
     const content = readGeneratedFile();
@@ -72,7 +71,7 @@ describe('generateIndexFile()', () => {
     const registry: FunctionRegistry = { foo: emptyReference };
     const config: Config = { useSingleQuotes: true };
 
-    await generateIndexFile(testIndexFilePath, registry, config);
+    await generateIndexFile(testDir, registry, config);
 
     const content = readGeneratedFile();
     expect(content).toContain(`import { createExportMap } from 'firebase-functions-smart-export';`);
