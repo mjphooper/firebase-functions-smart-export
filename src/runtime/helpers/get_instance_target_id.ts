@@ -22,7 +22,7 @@ export function getInstanceTargetId(processEnv: NodeJS.ProcessEnv): string | nul
 
   if (!target) return null;
 
-  const targetId = target.replace('-', '.').toLowerCase();
+  const targetId = target.replaceAll('-', '.').toLowerCase();
 
   const isValidPattern = /^[a-z0-9]+(\.[a-z0-9]+)*$/.test(targetId);
   if (!isValidPattern) {
