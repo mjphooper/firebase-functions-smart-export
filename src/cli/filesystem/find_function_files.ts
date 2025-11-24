@@ -28,5 +28,6 @@ export function findFunctionFiles(
     cwd: sourceDir,
     onlyFiles: true,
   });
-  return normalizePathsToJS(...relativePaths);
+  const normalizedPaths = normalizePathsToJS(...relativePaths);
+  return [...new Set(normalizedPaths)];
 }

@@ -1,6 +1,6 @@
 # Ignore built files
-cli/
-dist/
+/cli/
+/dist/
 /shared/
 
 # Ignore dependency files
