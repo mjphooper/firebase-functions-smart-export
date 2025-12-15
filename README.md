@@ -17,7 +17,7 @@ A great solution was provided by [better-firebase-functions](https://www.npmjs.c
 
 🛠️ **2.**  Two files are then built:
 - `ffse.registry.json` JSON file containing a lookup table of functions and their corresponding module paths.
-- `index.gen.js` Generated code placed in `lib` (or `/src`) that exports your functions in an	ESM compatible manner.
+- `index.gen.js` Generated code placed in your source directory (auto-detected or configured via `sourceDir`) that exports your functions in an ESM compatible manner.
 
 ⚡️**3.**  At runtime, FFSE uses your `ffse.registry.json` and a lightweight script to export only the module required by the instance in which it is running, avoiding the overhead of loading unused dependencies.
   
@@ -84,23 +84,37 @@ import defineConfig from "firebase-functions-smart-export/cli/defineConfig";
 export default defineConfig({...});
 ```
 Possible configuration fields are:
-- `matchExtension`: The file extension used to identify the files containing your functions. This defaults to `".function"`.
+- `sourceDir`: The directory containing your function source files, relative to the project root. For TypeScript projects, this is typically `'src'`. For JavaScript projects, this is typically `'lib'`. If not specified, FFSE will auto-detect by checking for `src/` first, then `lib/`.
+- `outDir`: The directory containing compiled JavaScript files at runtime, relative to the project root. This is where the runtime will look for function modules to import. Defaults to `'lib'`.
+- `matchExtension`: The file extension used to identify the files containing your functions. This defaults to `"function"`.
 - `ignoreGroups`: A list of groups to exclude from the final function name. This can be used to remove path segments with no semantic value from the exported function name.
-- `maxGroupCount`: Limits the number of groups in function names.
+- `maxGroupDepth`: Limits the number of groups in function names.
 - `disableGroups`: Removes groups entirely from function names.
 - `mapGroups`: Custom mapper that allows you to apply any transformation to the list of groups proposed for a given function.
 - `useSingleQuotes`: Whether to use single quotes `'` (instead of double) in the generated code. Alternatively, you can add `index.gen.js` as an exception in your linter config.
+
+### Example: Custom directories
+If your project uses non-standard directories (e.g., `dist/` instead of `lib/`):
+```javascript
+// ./ffse.config.js
+import defineConfig from "firebase-functions-smart-export/cli/defineConfig";
+
+export default defineConfig({
+  sourceDir: 'src',
+  outDir: 'dist',
+});
+```
 
 ## Performance
 _(To do)_
 The performance of this package is difficult to measure quantitively as it will
 
 ## TypeScript and ESM
-FFSE ships with TypeScript definitions and  works straight out the box in TypeScript projects. Just ensure your `index.ts` and function definitions are within `src/` and that the file structure of  `lib/` matches that of `src/` after compilation.
+FFSE ships with TypeScript definitions and works straight out of the box in TypeScript projects. By default, FFSE auto-detects `src/` as the source directory and uses `lib/` as the output directory. If your project uses different directories, configure `sourceDir` and `outDir` in your `ffse.config.js`.
 
 
 ## Limitations
-- FFSE's project parsing is currently not very robust and expects a default Firebase Functions setup. If you've moved, renamed, or otherwise fiddled with `lib/` or `lib/index.js` (or the Typescript equivalents), it will probably not work. Please feel free to [contribute](#contributing) or open an issue if it's not working for you!
+- FFSE assumes that your source directory structure matches your output directory structure after compilation. This is the default behavior of TypeScript and most build tools.
 
   
 <a name="contributing"></a>
