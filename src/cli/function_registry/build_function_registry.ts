@@ -12,10 +12,16 @@ const FUNCTION_ID_CHARACTER_LIMIT = 62;
 
 
 /**
- * Builds a FunctionRegistry by scanning the compiled `lib/` directory for function files.
- * 
- * Each function file's relative path is transformed into a function ID and optionally an export key,
- * then added to the registry. Throws an error if the function ID exceeds the character limit.
+ * Builds a FunctionRegistry from a list of function file paths.
+ *
+ * Each file path is transformed into a function ID and added to the registry.
+ * The resulting registry contains exactly one entry per input file - no files
+ * are filtered or skipped. Duplicate function IDs or IDs exceeding the character
+ * limit will throw an error rather than being silently ignored.
+ *
+ * @param files - The list of function file paths to register.
+ * @param config - Configuration options affecting ID generation.
+ * @returns A registry with the same number of entries as input files.
  */
 export function buildFunctionRegistry(
   files: string[],
