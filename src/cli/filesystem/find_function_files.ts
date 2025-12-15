@@ -1,6 +1,7 @@
 import glob from 'fast-glob';
-import { DEFAULT_MATCH_EXTENSION } from '../constants/default_match_extension.js';
 
+
+export const DEFAULT_MATCH_EXTENSION = 'function';
 
 /**
  * Replaces the extension of any file ending in `.ts` with `.js`.
