@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import { join } from 'path';
+import { getAbsProjectRootPath } from '../shared/paths.js';
 import { styledConsoleOutput } from '../shared/styled_console_log.js';
 import type { Config } from '../shared/types/config.js';
 
@@ -44,14 +45,14 @@ export function moduleExists(modulePath: string) {
 /**
  * Loads the user-defined configuration from the local config file if it exists.
  *
- * If a file named "ffse.config.js" exists in the specified directory, it attempts to dynamically import it
- * and return its default export as a partial configuration object. If the file does not exist, an empty
- * object is returned. If the file exists but does not export an object, an error is thrown.
+ * Looks for "ffse.config.js" in the project root directory. If found, dynamically imports it
+ * and returns its default export. If the file does not exist, returns an empty object.
+ * Throws if the file exists but does not export an object.
  *
- * @param dirPath - The absolute path to the directory in which to look for the config file.
- * @returns A promise resolving to a partial configuration object.
+ * @returns A promise resolving to the configuration object.
  */
-export async function getConfig(dirPath: string): Promise<Config> {
-  const path = join(dirPath, CONFIG_FILE_NAME);
+export async function getConfig(): Promise<Config> {
+  const absRootPath = getAbsProjectRootPath();
+  const path = join(absRootPath, CONFIG_FILE_NAME);
   return moduleExists(path) ? await importConfig(path) : {};
 }
