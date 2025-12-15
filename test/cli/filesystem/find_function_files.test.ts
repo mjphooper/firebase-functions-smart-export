@@ -2,8 +2,7 @@ import * as fs from 'fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as path from 'path';
-import { DEFAULT_MATCH_EXTENSION } from '../../../src/cli/constants/default_match_extension.js';
-import { findFunctionFiles } from '../../../src/cli/filesystem/find_function_files.js';
+import { DEFAULT_MATCH_EXTENSION, findFunctionFiles } from '../../../src/cli/filesystem/find_function_files.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

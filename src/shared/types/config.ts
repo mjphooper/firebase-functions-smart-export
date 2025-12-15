@@ -5,6 +5,16 @@
  */
 export interface Config {
   /**
+   * The directory containing your function source files, relative to the project root.
+   *
+   * For TypeScript projects, this is typically `'src'`. For JavaScript projects,
+   * this is typically `'lib'`.
+   *
+   * If not specified, FFSE will auto-detect by checking for `src/` first, then `lib/`.
+   */
+  sourceDir?: string,
+
+  /**
    * The custom file extension (excluding `.js`) used to identify function files.
    *
    * For example, if set to `'fn'`, the matcher will include files like `myFunction.fn.js`.

@@ -43,22 +43,21 @@ export async function main() {
 
     const startTime = performance.now()
 
-    deleteRegistryFile();
-    deleteIndexFile();
-
     const absRootPath = getAbsProjectRootPath();
-    const absSourcePath = getAbsSourceDirPath();
-
-    styledConsoleOutput.info(`Resolved source code path to: ${absSourcePath}`);
-
     const config = await getConfig(absRootPath);
-
 
     if (verbose) {
       styledConsoleOutput.info(
-        config ? 'Config file loaded.' : 'No "ffse.config.json" file found.'
+        config ? 'Config file loaded.' : 'No "ffse.config.js" file found.'
       );
     }
+
+    deleteRegistryFile();
+    deleteIndexFile(config.sourceDir);
+
+    const absSourcePath = getAbsSourceDirPath(config.sourceDir);
+
+    styledConsoleOutput.info(`Resolved source code path to: ${absSourcePath}`);
 
     if (verbose) {
       styledConsoleOutput.info(`Searching '${absSourcePath}' for ".function" files...`);
