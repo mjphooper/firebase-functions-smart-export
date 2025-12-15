@@ -46,7 +46,7 @@ describe('generateIndexFile()', () => {
     // Expect
     const content = readGeneratedFile();
     expect(content).toContain('import { createExportMap } from "firebase-functions-smart-export";');
-    expect(content).toContain('const exportMap = await createExportMap(registry);');
+    expect(content).toContain('const exportMap = await createExportMap(registry, { outDir: "lib" });');
   });
 
   test('writes named exports for each top-level key', async () => {

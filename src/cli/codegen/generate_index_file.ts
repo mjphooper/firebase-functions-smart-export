@@ -36,12 +36,13 @@ function getQuoteWrapperFor(config: Config): StringTransformer {
 
 function writeImportsAndSetup(config: Config): string {
   const quote = getQuoteWrapperFor(config);
+  const outDir = config.outDir ?? 'lib';
   return [
     '// GENERATED CODE - DO NOT MODIFY BY HAND',
     `import { createExportMap } from ${quote('firebase-functions-smart-export')};`,
     `import registry from ${quote(`./../${REGISTRY_FILE_NAME}`)} with { type: ${quote('json')} };`,
     '',
-    `const exportMap = await createExportMap(registry);`,
+    `const exportMap = await createExportMap(registry, { outDir: ${quote(outDir)} });`,
     ''
   ].join('\n');
 }
