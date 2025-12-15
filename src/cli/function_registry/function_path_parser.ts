@@ -1,4 +1,5 @@
 import { camelCase } from "change-case";
+import slash from "slash";
 import type { Config } from "../../shared/types/config.js";
 import type { FunctionExportKey, FunctionId } from "../../shared/types/function_id.js";
 import { transformGroups } from "./transform_groups.js";
@@ -21,7 +22,7 @@ export function parseExportKeyFromPath(
   filePath: string,
   config: Config,
 ): FunctionExportKey {
-  const splitPath = filePath.split('/');
+  const splitPath = slash(filePath).split('/');
 
   const fileName = splitPath.pop();
 

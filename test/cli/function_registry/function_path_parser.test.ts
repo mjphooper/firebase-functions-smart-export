@@ -58,3 +58,25 @@ describe('parseFunctionIdFromPath()', () => {
     expect(result).toBe('primarygroup.subgroup.myfunction');
   });
 });
+
+describe('Windows path handling', () => {
+  const emptyConfig: Config = {};
+
+  test('handles Windows-style backslash paths', () => {
+    const path = 'group\\subgroup\\func.function.js';
+    const result = parseExportKeyFromPath(path, emptyConfig);
+    expect(result).toBe('group.subgroup.func');
+  });
+
+  test('handles mixed slash styles', () => {
+    const path = 'group/subgroup\\func.function.js';
+    const result = parseExportKeyFromPath(path, emptyConfig);
+    expect(result).toBe('group.subgroup.func');
+  });
+
+  test('handles Windows paths with parseFunctionIdFromPath', () => {
+    const path = 'primaryGroup\\subGroup\\myFunction.function.js';
+    const result = parseFunctionIdFromPath(path, emptyConfig);
+    expect(result).toBe('primarygroup.subgroup.myfunction');
+  });
+});
