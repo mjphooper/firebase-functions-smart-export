@@ -63,7 +63,13 @@ export async function main() {
       styledConsoleOutput.info(`Searching '${absSourcePath}' for ".function" files...`);
     }
 
-    const files = findFunctionFiles(absSourcePath, config.matchExtension);
+    const { files, hasMixedFileTypes } = findFunctionFiles(absSourcePath, config.matchExtension);
+
+    if (hasMixedFileTypes) {
+      styledConsoleOutput.warn(
+        'Found both .ts and .js function files. Set `allowJs: true` in tsconfig.json to include .js files in compilation.'
+      );
+    }
 
     if (verbose) {
       styledConsoleOutput.info(`${files.length} file(s) found.`);

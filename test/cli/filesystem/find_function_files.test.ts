@@ -55,7 +55,7 @@ test('finds single file matching extension', () => {
   writeEmptyFile(libDir);
 
   // Act
-  const files = findFunctionFiles(libDir, matchExtension);
+  const { files } = findFunctionFiles(libDir, matchExtension);
 
   // Assert
   expect(files).toHaveLength(1);
@@ -66,7 +66,7 @@ test('matches file with same name as matchExtension', () => {
   writeEmptyFile(libDir, { name: 'function' });
 
   // Act
-  const files = findFunctionFiles(libDir, matchExtension);
+  const { files } = findFunctionFiles(libDir, matchExtension);
 
   // Assert
   expect(files).toHaveLength(1);
@@ -83,7 +83,7 @@ test('finds nested files matching extension', () => {
   writeEmptyFile(level2);
 
   // Act
-  const files = findFunctionFiles(libDir, matchExtension);
+  const { files } = findFunctionFiles(libDir, matchExtension);
 
   // Assert
   expect(files).toHaveLength(3);
@@ -98,7 +98,7 @@ test('ignores files not matching extension', () => {
   writeEmptyFile(libDir, { ext: 'js' });
 
   // Act
-  const files = findFunctionFiles(libDir, matchExtension);
+  const { files } = findFunctionFiles(libDir, matchExtension);
 
   // Assert
   expect(files).toHaveLength(1);
@@ -109,7 +109,7 @@ test('returns empty list when no files match extension', () => {
   writeEmptyFile(libDir, { ext: 'txt' });
 
   // Act
-  const files = findFunctionFiles(libDir, matchExtension);
+  const { files } = findFunctionFiles(libDir, matchExtension);
 
   // Assert
   expect(files).toHaveLength(0);
@@ -117,7 +117,7 @@ test('returns empty list when no files match extension', () => {
 
 test('returns empty list when no files exist', () => {
   // Act
-  const files = findFunctionFiles(libDir, matchExtension);
+  const { files } = findFunctionFiles(libDir, matchExtension);
 
   // Assert
   expect(files).toHaveLength(0);
@@ -129,7 +129,7 @@ test('does not match files with identifier but no name', () => {
   writeEmptyFile(libDir, { name: '' });
 
   // Act
-  const files = findFunctionFiles(libDir, matchExtension);
+  const { files } = findFunctionFiles(libDir, matchExtension);
 
   // Assert
   expect(files).toHaveLength(0);
@@ -141,7 +141,7 @@ test('does not match files with extra dots after .function.js', () => {
   writeEmptyFile(libDir, { ext: 'js.js' });
 
   // Act
-  const files = findFunctionFiles(libDir, matchExtension);
+  const { files } = findFunctionFiles(libDir, matchExtension);
 
   // Assert
   expect(files).toHaveLength(0);
@@ -152,8 +152,52 @@ test('uses DEFAULT_MATCH_EXTENSION when no matchExtension is provided', () => {
   writeEmptyFile(libDir);
 
   // Act
-  const files = findFunctionFiles(libDir);
+  const { files } = findFunctionFiles(libDir);
 
   // Assert
   expect(files).toHaveLength(1);
+});
+
+describe('hasMixedFileTypes', () => {
+  test('returns false when only .js files exist', () => {
+    // Arrange
+    writeEmptyFile(libDir, { ext: 'js' });
+
+    // Act
+    const { hasMixedFileTypes } = findFunctionFiles(libDir, matchExtension);
+
+    // Assert
+    expect(hasMixedFileTypes).toBe(false);
+  });
+
+  test('returns false when only .ts files exist', () => {
+    // Arrange
+    writeEmptyFile(libDir, { ext: 'ts' });
+
+    // Act
+    const { hasMixedFileTypes } = findFunctionFiles(libDir, matchExtension);
+
+    // Assert
+    expect(hasMixedFileTypes).toBe(false);
+  });
+
+  test('returns true when both .js and .ts files exist', () => {
+    // Arrange
+    writeEmptyFile(libDir, { name: 'jsFunc', ext: 'js' });
+    writeEmptyFile(libDir, { name: 'tsFunc', ext: 'ts' });
+
+    // Act
+    const { hasMixedFileTypes } = findFunctionFiles(libDir, matchExtension);
+
+    // Assert
+    expect(hasMixedFileTypes).toBe(true);
+  });
+
+  test('returns false when no files exist', () => {
+    // Act
+    const { hasMixedFileTypes } = findFunctionFiles(libDir, matchExtension);
+
+    // Assert
+    expect(hasMixedFileTypes).toBe(false);
+  });
 });
