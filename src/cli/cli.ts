@@ -1,16 +1,12 @@
 import { argv } from 'process';
-import { flattenFunctionRegistry } from '../shared/flatten_function_registry.js';
-import { getAbsProjectRootPath, getAbsSourceDirPath } from '../shared/paths.js';
-import { styledConsoleOutput } from '../shared/styled_console_log.js';
+import { getAbsSourceDirPath } from '../shared/paths.js';
 import { generateIndexFile } from './codegen/generate_index_file.js';
 import { generateRegistryFile } from './codegen/generate_registry_file.js';
 import { getConfig } from './config_loader.js';
-import { GENERATED_INDEX_FILE_NAME } from './constants/generated_index_file_name.js';
-import { REGISTRY_FILE_NAME } from './constants/registry_file_name.js';
-import { deleteIndexFile } from './filesystem/delete_index_file.js';
-import { deleteRegistryFile } from './filesystem/delete_registry_file.js';
+import { cleanupGeneratedFiles } from './filesystem/cleanup_generated_files.js';
 import { findFunctionFiles } from './filesystem/find_function_files.js';
 import { buildFunctionRegistry } from './function_registry/build_function_registry.js';
+import { Reporter } from './reporter.js';
 
 
 const HELP_MESSAGE = `
@@ -29,103 +25,57 @@ function parseCliFlags(argv: string[]) {
     verbose: argv.includes('--verbose'),
     help: argv.includes('--help'),
   };
-
 }
 
 export async function main() {
-  try {
-    const { dryRun, verbose, help } = parseCliFlags(argv);
+  const { dryRun, verbose, help } = parseCliFlags(argv);
+  const reporter = new Reporter(verbose);
 
+  try {
     if (help) {
       console.log(HELP_MESSAGE);
       process.exit(0);
     }
 
-    const startTime = performance.now()
+    reporter.started();
 
-    const absRootPath = getAbsProjectRootPath();
-    const config = await getConfig(absRootPath);
-
-    if (verbose) {
-      styledConsoleOutput.info(
-        config ? 'Config file loaded.' : 'No "ffse.config.js" file found.'
-      );
-    }
-
-    deleteRegistryFile();
-    deleteIndexFile(config.sourceDir);
-
+    const startTime = performance.now();
+    const config = await getConfig();
     const absSourcePath = getAbsSourceDirPath(config.sourceDir);
 
-    styledConsoleOutput.info(`Resolved source code path to: ${absSourcePath}`);
+    reporter.customConfigLoaded(config);
+    cleanupGeneratedFiles(config.sourceDir);
+    reporter.sourcePathResolved(absSourcePath);
+    reporter.searchStarted(config);
 
-    if (verbose) {
-      styledConsoleOutput.info(`Searching '${absSourcePath}' for ".function" files...`);
+    const files = findFunctionFiles(absSourcePath, config.matchExtension);
+    const functionCount = files.length;
+
+
+
+    if (functionCount === 0) {
+      reporter.noFunctionsFound();
+      process.exit(0);
     }
 
-    const { files, hasMixedFileTypes } = findFunctionFiles(absSourcePath, config.matchExtension);
-
-    if (hasMixedFileTypes) {
-      styledConsoleOutput.warn(
-        'Found both .ts and .js function files. Set `allowJs: true` in tsconfig.json to include .js files in compilation.'
-      );
-    }
-
-    if (verbose) {
-      styledConsoleOutput.info(`${files.length} file(s) found.`);
-      for (const file of files) {
-        styledConsoleOutput.info(file);
-      }
-    }
+    reporter.filesFound(files);
 
     const registry = buildFunctionRegistry(files, config);
 
-    const flattenedRegistry = flattenFunctionRegistry(registry);
-
-    const registrySize = Object.keys(flattenedRegistry).length;
-
-    const isRegistryEmpty = registrySize === 0;
-
-    if (verbose) {
-      for (const id of Object.keys(flattenedRegistry)) {
-        const reference = flattenedRegistry[id];
-        styledConsoleOutput.info(`${id} (from "${reference[0]}")`);
-      }
-    }
+    reporter.registryBuilt(registry);
 
     if (dryRun) {
-      styledConsoleOutput.success(
-        `✅ Dry run complete! ${registrySize} function(s) found to export in ${files.length} file(s).${verbose && !isRegistryEmpty ? ' To see the full list of exported functions, run with "--verbose".' : ''}`,
-      )
+      reporter.dryRunComplete(functionCount);
       process.exit(0);
     }
 
-    if (isRegistryEmpty) {
-      styledConsoleOutput.warn('No functions found to export. Skipping file generation.');
-      process.exit(0);
-    }
+    generateRegistryFile(registry);
+    generateIndexFile(absSourcePath, registry, config);
 
-
-    generateRegistryFile('', registry);
-
-    if (verbose) styledConsoleOutput.info(`Generated "${REGISTRY_FILE_NAME}".`)
-
-    await generateIndexFile(
-      absSourcePath,
-      registry,
-      config,
-    );
-
-    if (verbose) styledConsoleOutput.info(`Generated "${GENERATED_INDEX_FILE_NAME}".`)
-
-
-    const endTime = performance.now()
-    const timeTakenMs = endTime - startTime;
-    styledConsoleOutput.success(`Success! Exported ${registrySize} function(s) in ${timeTakenMs}ms`);
-
-    process.exit(0)
+    reporter.success(functionCount, startTime);
+    process.exit(0);
   } catch (error) {
-    styledConsoleOutput.error(`${error instanceof Error ? error.stack : error}`);
-    process.exit(1)
+    reporter.error(error);
+    process.exit(1);
   }
 }
