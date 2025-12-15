@@ -4,12 +4,12 @@
 Firebase Functions Smart Export ("FFSE" for short) is a dynamic function exporter that streamlines function exporting and aims to improves cold start times. FFSE is a [pure ESM package](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c),
   
 ## Motivation
-Cold starts in Firebase Functions can be slow, especially as your project grows in dependencies. By default, node evaluates the entirety of your project before executing any single function, which means even unused code and dependencies can slow down cold starts. There are [some tricks](https://youtu.be/v3eG9xpzNXM) to circumvent this, but these can be cumbersome to maintain as your project grows in size.
+Cold starts in Firebase Functions can be slow, especially as your project grows in dependencies. By default, Node evaluates the entirety of your project before executing any single function, which means even unused code and dependencies can slow down cold starts. There are [some tricks](https://youtu.be/v3eG9xpzNXM) to circumvent this, but these can be cumbersome to maintain as your project grows in size.
 
 A great solution was provided by [better-firebase-functions](https://www.npmjs.com/package/better-firebase-functions) (along with this excellent [article](https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://medium.com/swlh/a-toolkit-to-speed-up-and-optimise-firebase-cloud-functions-part-1-6f74f278660c&ved=2ahUKEwiJ75SB9faOAxX6W0EAHXWnOKgQFnoECB4QAQ&usg=AOvVaw0JcGk46yxFD_BMCb-PG_o_)). However, its lack of ESM support led to the birth of this project with two key improvements:
 
 1. Built from the ground up for **ESM projects**, allowing you to stay up to date with modern tooling.
-2. Uses a prebuilt **function lookup table** to minimize runtime dependencies, enabling a tiny runtime script that resolves modules even faster.
+2. Uses a prebuilt **function lookup table** to minimize runtime dependencies, enabling a tiny runtime script that resolves modules with as little overhead as possible.
 
 ## How it works
   
@@ -93,6 +93,7 @@ Possible configuration fields are:
 
 ## Performance
 _(To do)_
+The performance of this package is difficult to measure quantitively as it will
 
 ## TypeScript and ESM
 FFSE ships with TypeScript definitions and  works straight out the box in TypeScript projects. Just ensure your `index.ts` and function definitions are within `src/` and that the file structure of  `lib/` matches that of `src/` after compilation.
