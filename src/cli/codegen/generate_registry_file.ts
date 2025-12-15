@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import { join } from 'path';
 import type { FunctionRegistry } from '../../shared/types/function_registry.js';
 import { REGISTRY_FILE_NAME } from '../constants/registry_file_name.js';
 
@@ -9,11 +8,11 @@ import { REGISTRY_FILE_NAME } from '../constants/registry_file_name.js';
  * This JSON file serves as a static registry of all discovered Firebase
  * functions, enabling faster runtime lookup without scanning the filesystem.
  *
- * The output file path is fixed by the {@link REGISTRY_FILE_NAME} constant.
+ * The output file is written to the project root as {@link REGISTRY_FILE_NAME}.
  */
-export function generateRegistryFile(path: string, registry: FunctionRegistry) {
+export function generateRegistryFile(registry: FunctionRegistry) {
   fs.writeFileSync(
-    join(path, REGISTRY_FILE_NAME),
+    REGISTRY_FILE_NAME,
     JSON.stringify(registry, null, 2),
     'utf8',
   );
