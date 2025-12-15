@@ -1,13 +1,9 @@
 import fs from 'node:fs';
 import { join } from 'node:path';
-import { calculateRegistrySize } from '../../shared/calculate_registry_size.js';
 import type { Config } from '../../shared/types/config.js';
 import type { FunctionRegistry } from '../../shared/types/function_registry.js';
 import { GENERATED_INDEX_FILE_NAME } from '../constants/generated_index_file_name.js';
 import { REGISTRY_FILE_NAME } from '../constants/registry_file_name.js';
-
-
-export const EMPTY_REGISTRY_ERROR_MESSAGE = 'Cannot generate an `index.gen.js` for an empty registry.';
 
 /**
  * Simple signature for a function that applies a transformation to a `string`.
@@ -55,15 +51,24 @@ function writeExports(registry: FunctionRegistry): string {
   return lines.join('\n');
 }
 
-export async function generateIndexFile(
+/**
+ * Generates the index file that exports all functions from the registry.
+ *
+ * Writes a JS file to the source directory containing imports, setup code,
+ * and export statements for each top-level group or function in the registry.
+ *
+ * Should not be called with an empty registry. An empty registry will produce
+ * a file with no exports, which serves no purpose.
+ *
+ * @param preferredSourceDir - The directory to write the generated file to.
+ * @param registry - The function registry to generate exports from.
+ * @param config - Configuration options affecting output format.
+ */
+export function generateIndexFile(
   preferredSourceDir: string,
   registry: FunctionRegistry,
   config: Config,
-): Promise<void> {
-  if (calculateRegistrySize(registry) === 0) {
-    throw Error(EMPTY_REGISTRY_ERROR_MESSAGE);
-  }
-
+): void {
   const contents = [
     writeImportsAndSetup(config),
     writeExports(registry)
