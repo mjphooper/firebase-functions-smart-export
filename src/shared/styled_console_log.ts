@@ -17,12 +17,16 @@ function applyColor(message: string, color?: AnsiColor): string {
   return color ? `${ANSI_CODES[color]}${message}${resetColor}` : message;
 }
 
+interface OutputOptions {
+  skipPrefix?: boolean;
+}
+
 /**
- * Returns the given message with the given color and preceeded by an identifying prefix.
+ * Returns the given message with the given color and optionally preceeded by an identifying prefix.
  */
-function outputWithStyle(message: string, color?: AnsiColor): string {
+function outputWithStyle(message: string, color?: AnsiColor, options: OutputOptions = {}): string {
   const styledMessage = applyColor(message, color);
-  return `${LOG_PREFIX} ${styledMessage}`;
+  return options.skipPrefix ? styledMessage : `${LOG_PREFIX} ${styledMessage}`;
 }
 
 /**
@@ -41,19 +45,19 @@ function outputWithStyle(message: string, color?: AnsiColor): string {
  * istanbul ignore next
  */
 export const styledConsoleOutput = {
-  log: (message: string) => {
-    if (!runContext.isTest) console.log(outputWithStyle(message));
+  log: (message: string, options?: OutputOptions) => {
+    if (!runContext.isTest) console.log(outputWithStyle(message, undefined, options));
   },
-  info: (message: string) => {
-    if (!runContext.isTest) console.log(outputWithStyle(`INFO: ${message}`, 'blue'));
+  info: (message: string, options?: OutputOptions) => {
+    if (!runContext.isTest) console.log(outputWithStyle(`INFO: ${message}`, 'blue', options));
   },
-  warn: (message: string) => {
-    if (!runContext.isTest) console.warn(outputWithStyle(`WARNING: ${message}`, 'yellow'));
+  warn: (message: string, options?: OutputOptions) => {
+    if (!runContext.isTest) console.warn(outputWithStyle(`WARNING: ${message}`, 'yellow', options));
   },
-  error: (message: string) => {
-    if (!runContext.isTest) console.error(outputWithStyle(`ERROR: ${message}`, 'red'));
+  error: (message: string, options?: OutputOptions) => {
+    if (!runContext.isTest) console.error(outputWithStyle(`ERROR: ${message}`, 'red', options));
   },
-  success: (message: string) => {
-    if (!runContext.isTest) console.log(outputWithStyle(`${message}`, 'green'));
+  success: (message: string, options?: OutputOptions) => {
+    if (!runContext.isTest) console.log(outputWithStyle(message, 'green', options));
   },
 };
