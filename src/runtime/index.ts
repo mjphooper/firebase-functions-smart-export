@@ -1,10 +1,20 @@
 import dlv from "dlv";
 import { flattenFunctionRegistry } from "../shared/flatten_function_registry";
 import { FunctionReference, FunctionRegistry } from "../shared/types/function_registry";
-import { deepSetCloudFunction } from "./helpers/deep_set_cloud_function";
+import { deepSetCloudFunction, DEFAULT_OUT_DIR } from "./helpers/deep_set_cloud_function";
 import { getInstanceTargetId } from "./helpers/get_instance_target_id";
 import type { ExportMap } from "./types/export_map";
 
+/**
+ * Options for creating the export map.
+ */
+export interface CreateExportMapOptions {
+  /**
+   * The directory containing compiled JavaScript files, relative to the project root.
+   * Defaults to 'lib' if not specified.
+   */
+  outDir?: string;
+}
 
 /**
  * Creates a map of function IDs to their corresponding Cloud Function exports.
@@ -20,15 +30,17 @@ import type { ExportMap } from "./types/export_map";
  * objects.
  */
 export async function createExportMap(
-  jsonRegistry: FunctionRegistry
+  jsonRegistry: FunctionRegistry,
+  options: CreateExportMapOptions = {},
 ): Promise<ExportMap> {
 
+  const outDir = options.outDir ?? DEFAULT_OUT_DIR;
   const exportMap: ExportMap = {};
 
   const contextualDeepSetCloudFunction = (
     functionId: string,
     reference: FunctionReference,
-  ) => deepSetCloudFunction(functionId, reference, exportMap);
+  ) => deepSetCloudFunction(functionId, reference, exportMap, outDir);
 
   const targetId = getInstanceTargetId(process.env);
 

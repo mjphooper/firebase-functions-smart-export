@@ -15,6 +15,15 @@ export interface Config {
   sourceDir?: string,
 
   /**
+   * The directory containing compiled JavaScript files at runtime, relative to the project root.
+   *
+   * This is where the runtime will look for function modules to import.
+   *
+   * Defaults to `'lib'` if not specified.
+   */
+  outDir?: string,
+
+  /**
    * The custom file extension (excluding `.js`) used to identify function files.
    *
    * For example, if set to `'fn'`, the matcher will include files like `myFunction.fn.js`.
