@@ -17,7 +17,6 @@ export const CONFIG_FILE_NAME = 'ffse.config.js';
 export async function getModuleDefault(configPath: string): Promise<unknown> {
   const module = await import(configPath);
   return module.default;
-
 }
 
 export async function importConfig(modulePath: string): Promise<Config> {
