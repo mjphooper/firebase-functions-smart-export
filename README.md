@@ -110,7 +110,7 @@ _(To do)_
 The performance of this package is difficult to measure quantitively as it will
 
 ## TypeScript and ESM
-FFSE ships with TypeScript definitions and works straight out of the box in TypeScript projects. By default, FFSE auto-detects `src/` as the source directory and uses `lib/` as the output directory. If your project uses different directories, configure `sourceDir` and `outDir` in your `ffse.config.js`.
+FFSE ships with TypeScript definitions and works straight out of the box in TypeScript projects. By default, FFSE uses `src/` as the source directory and uses `lib/` as the compiled output directory containing your JavaScript files. If your project uses different directories, configure `sourceDir` and `outDir` in your `ffse.config.js`.
 
 
 ## Limitations
