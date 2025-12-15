@@ -8,9 +8,11 @@ import { GENERATED_INDEX_FILE_NAME } from '../constants/generated_index_file_nam
  * Deletes the generated index file if it exists.
  *
  * This operation is silent if the file does not exist.
+ *
+ * @param sourceDir - Optional explicit source directory from config.
  */
-export async function deleteIndexFile(): Promise<void> {
-  const absSourcePath = getAbsSourceDirPath();
+export function deleteIndexFile(sourceDir?: string): void {
+  const absSourcePath = getAbsSourceDirPath(sourceDir);
   const indexPath = join(absSourcePath, GENERATED_INDEX_FILE_NAME);
   if (fs.existsSync(indexPath)) {
     fs.unlinkSync(indexPath);
