@@ -1,19 +1,17 @@
 import * as fs from 'fs';
 import { join } from 'path';
-import { getAbsProjectRootPath } from '../shared/paths.js';
-import { styledConsoleOutput } from '../shared/styled_console_log.js';
-import type { Config } from '../shared/types/config.js';
+import { getAbsProjectRootPath } from './paths.js';
+import { styledConsoleOutput } from './styled_console_log.js';
+import type { Config } from './types/config.js';
 
 /** The name of the user created configuration file. */
 export const CONFIG_FILE_NAME = 'ffse.config.js';
 
 /**
  * Returns the default export of the config module at the given path.
- * 
+ *
  * Returns an `unknown` object to reflect we have no control over the contents of
  * the config.
- * @param configPath 
- * @returns 
  */
 export async function getModuleDefault(configPath: string): Promise<unknown> {
   const module = await import(configPath);
@@ -49,10 +47,11 @@ export function moduleExists(modulePath: string) {
  * and returns its default export. If the file does not exist, returns an empty object.
  * Throws if the file exists but does not export an object.
  *
+ * @param absRootPath - Optional absolute path to the project root. Defaults to `process.cwd()`.
  * @returns A promise resolving to the configuration object.
  */
-export async function getConfig(): Promise<Config> {
-  const absRootPath = getAbsProjectRootPath();
-  const path = join(absRootPath, CONFIG_FILE_NAME);
+export async function getConfig(absRootPath?: string): Promise<Config> {
+  const root = absRootPath ?? getAbsProjectRootPath();
+  const path = join(root, CONFIG_FILE_NAME);
   return moduleExists(path) ? await importConfig(path) : {};
 }

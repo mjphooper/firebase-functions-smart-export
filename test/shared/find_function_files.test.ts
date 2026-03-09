@@ -2,12 +2,12 @@ import * as fs from 'fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as path from 'path';
-import { DEFAULT_MATCH_EXTENSION, findFunctionFiles } from '../../../src/cli/filesystem/find_function_files.js';
+import { DEFAULT_MATCH_EXTENSION, findFunctionFiles } from '../../src/shared/find_function_files.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 
-const tempFixturesDir = path.resolve(__dirname, '../temp_fixtures');
+const tempFixturesDir = path.resolve(__dirname, 'temp_find_function_files');
 const libDir = path.join(tempFixturesDir, 'lib');
 
 const matchExtension = DEFAULT_MATCH_EXTENSION;
@@ -21,14 +21,14 @@ const matchExtension = DEFAULT_MATCH_EXTENSION;
 function writeEmptyFile(dir: string, config?: {
   /**
    * The extension of the file. The leading `.` may be omitted.
-   * 
+   *
    * Defaults to `js`.
    */
   ext?: string,
 
   /**
    * The name of the file.
-   * 
+   *
    * Defaults to `test`.
    */
   name?: string,

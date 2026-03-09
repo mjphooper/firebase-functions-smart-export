@@ -1,4 +1,4 @@
-import type { Config } from "../../shared/types/config.js";
+import type { Config } from "./types/config.js";
 
 
 /**
@@ -19,7 +19,7 @@ function applyIgnoreGroups(groups: string[], ignore?: string[]) {
 
 /**
  * Limits the group array to the maximum depth specified in config.
- * 
+ *
  * @throws If `maxGroupDepth` is defined and less than 1.
  */
 function applyMaxDepth(groups: string[], maxDepth?: number) {

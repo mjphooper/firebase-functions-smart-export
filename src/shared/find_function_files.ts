@@ -1,5 +1,4 @@
 import glob from 'fast-glob';
-import { styledConsoleOutput } from '../../shared/styled_console_log.js';
 
 export const DEFAULT_MATCH_EXTENSION = 'function';
 
@@ -13,16 +12,21 @@ function normalizePathsToJS(...paths: string[]): string[] {
   });
 }
 
+export interface FindFunctionFilesResult {
+  files: string[];
+  hasMixedFileTypes: boolean;
+}
+
 /**
  * Recursively finds all files matching the extension pattern in the given directory.
  *
- * Returns a list of file paths transformed to point to `.js` files.
- * Logs a warning if both .ts and .js function files are found.
+ * Returns a list of file paths transformed to point to `.js` files, along with
+ * whether both `.ts` and `.js` function files were found.
  */
 export function findFunctionFiles(
   sourceDir: string,
   matchExtension: string = DEFAULT_MATCH_EXTENSION,
-): string[] {
+): FindFunctionFilesResult {
   const relativePaths = glob.sync(`**/*.${matchExtension}.[jt]s`, {
     cwd: sourceDir,
     onlyFiles: true,
@@ -31,12 +35,9 @@ export function findFunctionFiles(
   const hasTsFiles = relativePaths.some(p => p.endsWith('.ts'));
   const hasJsFiles = relativePaths.some(p => p.endsWith('.js'));
 
-  if (hasTsFiles && hasJsFiles) {
-    styledConsoleOutput.warn(
-      'Found both .ts and .js function files. Set `allowJs: true` in tsconfig.json to include .js files in compilation.'
-    );
-  }
-
   const normalizedPaths = normalizePathsToJS(...relativePaths);
-  return [...new Set(normalizedPaths)];
+  return {
+    files: [...new Set(normalizedPaths)],
+    hasMixedFileTypes: hasTsFiles && hasJsFiles,
+  };
 }

@@ -1,7 +1,5 @@
-// test/transform_groups.test.ts
-
-import { transformGroups } from "../../../src/cli/function_registry/transform_groups.js";
-import { Config } from "../../../src/shared/types/config.js";
+import { transformGroups } from "../../src/shared/transform_groups.js";
+import { Config } from "../../src/shared/types/config.js";
 
 
 

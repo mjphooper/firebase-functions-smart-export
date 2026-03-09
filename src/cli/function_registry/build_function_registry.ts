@@ -1,8 +1,5 @@
-import dlv from 'dlv';
-import { dset } from 'dset';
+import { parseExportKeyFromPath, parseFunctionIdFromPath } from '../../shared/function_path_parser.js';
 import type { Config } from '../../shared/types/config.js';
-import type { FunctionReference, FunctionRegistry } from '../../shared/types/function_registry.js';
-import { parseExportKeyFromPath, parseFunctionIdFromPath } from './function_path_parser.js';
 
 /**
  * The maximum number of characters in a function ID. This includes both the groups
@@ -10,24 +7,36 @@ import { parseExportKeyFromPath, parseFunctionIdFromPath } from './function_path
  */
 const FUNCTION_ID_CHARACTER_LIMIT = 62;
 
+export interface ValidatedFunction {
+  functionId: string;
+  exportKey: string;
+  filePath: string;
+}
+
+export interface ValidationResult {
+  topLevelKeys: string[];
+  functions: ValidatedFunction[];
+}
 
 /**
- * Builds a FunctionRegistry from a list of function file paths.
+ * Validates function file paths and extracts the top-level export keys needed
+ * for generating `index.gen.js`.
  *
- * Each file path is transformed into a function ID and added to the registry.
- * The resulting registry contains exactly one entry per input file - no files
- * are filtered or skipped. Duplicate function IDs or IDs exceeding the character
- * limit will throw an error rather than being silently ignored.
+ * Each file path is parsed into a function ID and export key, then validated
+ * against the character limit and checked for duplicates. The resulting
+ * top-level keys are the unique first segments of each function ID.
  *
- * @param files - The list of function file paths to register.
+ * @param files - The list of function file paths to validate.
  * @param config - Configuration options affecting ID generation.
- * @returns A registry with the same number of entries as input files.
+ * @returns The unique top-level export keys and the list of validated functions.
  */
-export function buildFunctionRegistry(
+export function validateFunctions(
   files: string[],
   config: Config,
-): FunctionRegistry {
-  const registry: FunctionRegistry = {};
+): ValidationResult {
+  const seen = new Map<string, string>();
+  const topLevelKeys = new Set<string>();
+  const functions: ValidatedFunction[] = [];
 
   for (const filePath of files) {
 
@@ -40,26 +49,27 @@ export function buildFunctionRegistry(
       );
     }
 
-    const existingReferenceForId: FunctionReference = dlv(registry, functionId);
-    if (existingReferenceForId) {
+    const existingPath = seen.get(functionId);
+    if (existingPath) {
       throw new Error(`
         The same function name (${functionId}) was generated from the following paths:
-        1) ${existingReferenceForId[0]}
+        1) ${existingPath}
         2) ${filePath}
 
         Please change either your file structure or "ffse.config.json" to ensure these paths produce unique function names.
       `);
     }
 
-    // The export key should only saved if it differs to the function ID.
-    const includeExportKey = functionId !== exportKey;
+    seen.set(functionId, filePath);
 
-    dset(
-      registry,
-      functionId,
-      includeExportKey ? [filePath, exportKey] : [filePath],
-    );
+    const firstSegment = functionId.split('.')[0];
+    topLevelKeys.add(firstSegment);
+
+    functions.push({ functionId, exportKey, filePath });
   }
 
-  return registry;
+  return {
+    topLevelKeys: [...topLevelKeys],
+    functions,
+  };
 }

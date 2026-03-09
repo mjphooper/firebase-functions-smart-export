@@ -2,7 +2,7 @@ import { jest } from '@jest/globals';
 import fs from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
-import { getConfig } from '../../src/cli/config_loader.js';
+import { getConfig } from '../../src/shared/config_loader.js';
 import { runContext } from '../../src/shared/run_context.js';
 import { Config } from '../../src/shared/types/config.js';
 
@@ -13,7 +13,7 @@ describe('config_loader', () => {
   });
 
   const __dirname = dirname(fileURLToPath(import.meta.url));
-  const fixturesPath = resolve(__dirname, './temp_fixtures');
+  const fixturesPath = resolve(__dirname, 'temp_config_loader');
 
   function createFakeConfigFile(config: unknown): void {
     const filePath = resolve(fixturesPath, 'ffse.config.js');
