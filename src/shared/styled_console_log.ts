@@ -1,4 +1,3 @@
-import { runContext } from './run_context.js';
 /* istanbul ignore file */
 
 const LOG_PREFIX = '[firebase-functions-smart-export]';
@@ -46,18 +45,18 @@ function outputWithStyle(message: string, color?: AnsiColor, options: OutputOpti
  */
 export const styledConsoleOutput = {
   log: (message: string, options?: OutputOptions) => {
-    if (!runContext.isTest) console.log(outputWithStyle(message, undefined, options));
+    if (process.env.NODE_ENV !== 'test') console.log(outputWithStyle(message, undefined, options));
   },
   info: (message: string, options?: OutputOptions) => {
-    if (!runContext.isTest) console.log(outputWithStyle(`INFO: ${message}`, 'blue', options));
+    if (process.env.NODE_ENV !== 'test') console.log(outputWithStyle(`INFO: ${message}`, 'blue', options));
   },
   warn: (message: string, options?: OutputOptions) => {
-    if (!runContext.isTest) console.warn(outputWithStyle(`WARNING: ${message}`, 'yellow', options));
+    if (process.env.NODE_ENV !== 'test') console.warn(outputWithStyle(`WARNING: ${message}`, 'yellow', options));
   },
   error: (message: string, options?: OutputOptions) => {
-    if (!runContext.isTest) console.error(outputWithStyle(`ERROR: ${message}`, 'red', options));
+    if (process.env.NODE_ENV !== 'test') console.error(outputWithStyle(`ERROR: ${message}`, 'red', options));
   },
   success: (message: string, options?: OutputOptions) => {
-    if (!runContext.isTest) console.log(outputWithStyle(message, 'green', options));
+    if (process.env.NODE_ENV !== 'test') console.log(outputWithStyle(message, 'green', options));
   },
 };

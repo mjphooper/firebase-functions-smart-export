@@ -3,14 +3,9 @@ import fs from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { getConfig } from '../../src/shared/config_loader.js';
-import { runContext } from '../../src/shared/run_context.js';
 import { Config } from '../../src/shared/types/config.js';
 
 describe('config_loader', () => {
-
-  beforeAll(() => {
-    runContext.isTest = true;
-  });
 
   const __dirname = dirname(fileURLToPath(import.meta.url));
   const fixturesPath = resolve(__dirname, 'temp_config_loader');
