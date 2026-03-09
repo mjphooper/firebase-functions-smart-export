@@ -1,7 +1,5 @@
-// test/function_path_parser.test.ts
-
-import { parseExportKeyFromPath, parseFunctionIdFromPath } from "../../../src/cli/function_registry/function_path_parser.js";
-import { Config } from "../../../src/shared/types/config.js";
+import { parseExportKeyFromPath, parseFunctionIdFromPath } from "../../src/shared/function_path_parser.js";
+import { Config } from "../../src/shared/types/config.js";
 
 
 

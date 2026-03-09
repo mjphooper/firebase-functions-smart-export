@@ -1,16 +1,16 @@
 import { camelCase } from "change-case";
 import slash from "slash";
-import type { Config } from "../../shared/types/config.js";
-import type { FunctionExportKey, FunctionId } from "../../shared/types/function_id.js";
+import type { Config } from "./types/config.js";
+import type { FunctionExportKey, FunctionId } from "./types/function_id.js";
 import { transformGroups } from "./transform_groups.js";
 
 /**
  * Converts a relative file path into a camelCase export key used for exporting functions.
  *
- * The file name must match the pattern `*.{matchExtension}.js` (e.g., `myFunc.function.js`), 
+ * The file name must match the pattern `*.{matchExtension}.js` (e.g., `myFunc.function.js`),
  * where the last two extensions are removed to determine the function name (`myFunc`).
  *
- * The export key is constructed by transforming the folder path and file name into dot-separated 
+ * The export key is constructed by transforming the folder path and file name into dot-separated
  * camelCase segments, after applying any group filtering or remapping defined in the config.
  *
  * @param filePath - The relative file path of the function module
@@ -41,8 +41,8 @@ export function parseExportKeyFromPath(
 
 /**
  * Converts a relative file path to a lowercase function ID used for internal registry storage.
- * 
- * Internally calls `filePathToExportKey`, then lowercases the result.
+ *
+ * Internally calls `parseExportKeyFromPath`, then lowercases the result.
  */
 export function parseFunctionIdFromPath(
   relPath: string,

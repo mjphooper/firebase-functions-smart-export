@@ -1,6 +1,6 @@
 import { styledConsoleOutput } from '../shared/styled_console_log.js';
 import { Config } from '../shared/types/config.js';
-import { type FunctionRegistry, isFunctionReference } from '../shared/types/function_registry.js';
+import type { ValidatedFunction } from './validate_functions.js';
 
 /**
  * Handles all CLI output and reporting.
@@ -44,21 +44,12 @@ export class Reporter {
     }
   }
 
-  registryBuilt(registry: FunctionRegistry): void {
+  functionsValidated(functions: ValidatedFunction[]): void {
     if (!this.verbose) return;
 
-    const logRecursive = (registry: FunctionRegistry, path: string[] = []): void => {
-      for (const [key, value] of Object.entries(registry)) {
-        const currentPath = [...path, key];
-        if (isFunctionReference(value)) {
-          styledConsoleOutput.info(`${currentPath.join('.')} (from "${value[0]}")`);
-        } else {
-          logRecursive(value, currentPath);
-        }
-      }
-    };
-
-    logRecursive(registry);
+    for (const fn of functions) {
+      styledConsoleOutput.info(`${fn.functionId} (from "${fn.filePath}")`);
+    }
   }
 
   sourcePathResolved(sourcePath: string): void {

@@ -1,11 +1,11 @@
 import { argv } from 'process';
+import { getConfig } from '../shared/config_loader.js';
+import { findFunctionFiles } from '../shared/find_function_files.js';
 import { getAbsSourceDirPath } from '../shared/paths.js';
+import { styledConsoleOutput } from '../shared/styled_console_log.js';
 import { generateIndexFile } from './codegen/generate_index_file.js';
-import { generateRegistryFile } from './codegen/generate_registry_file.js';
-import { getConfig } from './config_loader.js';
 import { cleanupGeneratedFiles } from './filesystem/cleanup_generated_files.js';
-import { findFunctionFiles } from './filesystem/find_function_files.js';
-import { buildFunctionRegistry } from './function_registry/build_function_registry.js';
+import { validateFunctions } from './validate_functions.js';
 import { Reporter } from './reporter.js';
 
 
@@ -48,10 +48,15 @@ export async function main() {
     reporter.sourcePathResolved(absSourcePath);
     reporter.searchStarted(config);
 
-    const files = findFunctionFiles(absSourcePath, config.matchExtension);
+    const { files, hasMixedFileTypes } = findFunctionFiles(absSourcePath, config.matchExtension);
+
+    if (hasMixedFileTypes) {
+      styledConsoleOutput.warn(
+        'Found both .ts and .js function files. Set `allowJs: true` in tsconfig.json to include .js files in compilation.'
+      );
+    }
+
     const functionCount = files.length;
-
-
 
     if (functionCount === 0) {
       reporter.noFunctionsFound();
@@ -60,17 +65,16 @@ export async function main() {
 
     reporter.filesFound(files);
 
-    const registry = buildFunctionRegistry(files, config);
+    const { topLevelKeys, functions } = validateFunctions(files, config);
 
-    reporter.registryBuilt(registry);
+    reporter.functionsValidated(functions);
 
     if (dryRun) {
       reporter.dryRunComplete(functionCount);
       process.exit(0);
     }
 
-    generateRegistryFile(registry);
-    generateIndexFile(absSourcePath, registry, config);
+    await generateIndexFile(absSourcePath, topLevelKeys, config);
 
     reporter.success(functionCount, startTime);
     process.exit(0);

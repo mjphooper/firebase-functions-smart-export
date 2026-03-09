@@ -1,69 +1,61 @@
-import dlv from "dlv";
-import { flattenFunctionRegistry } from "../shared/flatten_function_registry";
-import { FunctionReference, FunctionRegistry } from "../shared/types/function_registry";
-import { deepSetCloudFunction, DEFAULT_OUT_DIR } from "./helpers/deep_set_cloud_function";
+import { join } from 'path';
+import { getConfig } from "../shared/config_loader";
+import { DEFAULT_MATCH_EXTENSION, findFunctionFiles } from "../shared/find_function_files";
+import { parseExportKeyFromPath, parseFunctionIdFromPath } from "../shared/function_path_parser";
+import { getAbsProjectRootPath } from "../shared/paths";
+import { deepSetCloudFunction } from "./helpers/deep_set_cloud_function";
 import { getInstanceTargetId } from "./helpers/get_instance_target_id";
 import type { ExportMap } from "./types/export_map";
 
 /**
- * Options for creating the export map.
+ * The default output directory containing compiled JavaScript files.
  */
-export interface CreateExportMapOptions {
-  /**
-   * The directory containing compiled JavaScript files, relative to the project root.
-   * Defaults to 'lib' if not specified.
-   */
-  outDir?: string;
-}
+const DEFAULT_OUT_DIR = 'lib';
 
 /**
  * Creates a map of function IDs to their corresponding Cloud Function exports.
  *
+ * Loads the project configuration, globs the output directory for function files,
+ * and dynamically imports the matched functions.
+ *
  * If the current instance's function target ID is set via environment variable,
  * it short-circuits to load only that function. Otherwise, it loads all
- * functions listed in the JSON registry.
+ * discovered functions.
  *
- * This is used to dynamically build the export object used in Firebase
- * Functions deployment, avoiding eager loading of all modules unless necessary.
- *
- * @returns A promise resolving to a map of function IDs to their exported
- * objects.
+ * @returns A promise resolving to a map of function IDs to their exported objects.
  */
-export async function createExportMap(
-  jsonRegistry: FunctionRegistry,
-  options: CreateExportMapOptions = {},
-): Promise<ExportMap> {
+export async function createExportMap(): Promise<ExportMap> {
+  const config = await getConfig();
+  const outDir = config.outDir ?? DEFAULT_OUT_DIR;
+  const absOutDir = join(getAbsProjectRootPath(), outDir);
+  const matchExtension = config.matchExtension ?? DEFAULT_MATCH_EXTENSION;
 
-  const outDir = options.outDir ?? DEFAULT_OUT_DIR;
-  const exportMap: ExportMap = {};
-
-  const contextualDeepSetCloudFunction = (
-    functionId: string,
-    reference: FunctionReference,
-  ) => deepSetCloudFunction(functionId, reference, exportMap, outDir);
+  const { files } = findFunctionFiles(absOutDir, matchExtension);
 
   const targetId = getInstanceTargetId(process.env);
+  const exportMap: ExportMap = {};
 
   if (targetId) {
-    const reference = dlv(jsonRegistry, targetId);
-    const isTargetRegistered = reference != undefined;
-
-    if (!isTargetRegistered) {
-      const https = await import('firebase-functions/https');
-      throw new https.HttpsError(
-        'failed-precondition',
-        `Function ${targetId} is not registered. Have you run 'build' since adding the function?`,
-      );
+    for (const filePath of files) {
+      const functionId = parseFunctionIdFromPath(filePath, config);
+      if (functionId === targetId) {
+        const exportKey = parseExportKeyFromPath(filePath, config);
+        await deepSetCloudFunction(filePath, exportKey, exportMap, absOutDir);
+        return exportMap;
+      }
     }
-    await contextualDeepSetCloudFunction(targetId, reference);
+
+    const https = await import('firebase-functions/https');
+    throw new https.HttpsError(
+      'not-found',
+      `Function "${targetId}" not found in ${outDir}/. Have you compiled your functions?`,
+    );
   } else {
-    const flattenedRegistry = flattenFunctionRegistry(jsonRegistry);
-    for (const id of Object.keys(flattenedRegistry)) {
-      const reference = flattenedRegistry[id];
-      await contextualDeepSetCloudFunction(id, reference);
+    for (const filePath of files) {
+      const exportKey = parseExportKeyFromPath(filePath, config);
+      await deepSetCloudFunction(filePath, exportKey, exportMap, absOutDir);
     }
   }
 
   return exportMap;
-
 }

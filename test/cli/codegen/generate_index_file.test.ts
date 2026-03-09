@@ -4,7 +4,6 @@ import { fileURLToPath } from 'url';
 import { GENERATED_INDEX_FILE_NAME } from '../../../cli/constants/generated_index_file_name.js';
 import { EMPTY_REGISTRY_ERROR_MESSAGE, generateIndexFile } from '../../../src/cli/codegen/generate_index_file.js';
 import { Config } from '../../../src/shared/types/config.js';
-import { FunctionReference, FunctionRegistry } from '../../../src/shared/types/function_registry.js';
 
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -16,7 +15,6 @@ function readGeneratedFile() {
 
 describe('generateIndexFile()', () => {
   const doubleQuoteConfig: Config = { useSingleQuotes: false };
-  const emptyReference: FunctionReference = [''];
 
   beforeEach(() => {
     fs.mkdirSync(testDir);
@@ -26,40 +24,26 @@ describe('generateIndexFile()', () => {
     await fs.promises.rmdir(testDir, { recursive: true });
   });
 
-  test('throws if the function registry is empty', async () => {
-    // Arrange
-    const registry: FunctionRegistry = {};
-
+  test('throws if the top-level keys list is empty', async () => {
     // Act & Assert
-    await expect(generateIndexFile(testDir, registry, doubleQuoteConfig)).rejects.toThrow(
+    await expect(generateIndexFile(testDir, [], doubleQuoteConfig)).rejects.toThrow(
       EMPTY_REGISTRY_ERROR_MESSAGE
     );
   });
 
   test('writes imports and exportMap initialization', async () => {
-    // Arrange
-    const registry: FunctionRegistry = { foo: emptyReference };
-
     // Act
-    await generateIndexFile(testDir, registry, doubleQuoteConfig);
+    await generateIndexFile(testDir, ['foo'], doubleQuoteConfig);
 
     // Expect
     const content = readGeneratedFile();
     expect(content).toContain('import { createExportMap } from "firebase-functions-smart-export";');
-    expect(content).toContain('const exportMap = await createExportMap(registry, { outDir: "lib" });');
+    expect(content).toContain('const exportMap = await createExportMap();');
   });
 
   test('writes named exports for each top-level key', async () => {
-    // Arrange
-    const registry: FunctionRegistry = {
-      foo: emptyReference,
-      bar: {
-        baz: emptyReference,
-      },
-    };
-
     // Act
-    await generateIndexFile(testDir, registry, doubleQuoteConfig);
+    await generateIndexFile(testDir, ['foo', 'bar'], doubleQuoteConfig);
 
     // Assert
     const content = readGeneratedFile();
@@ -68,10 +52,9 @@ describe('generateIndexFile()', () => {
   });
 
   test('quote style reflects config', async () => {
-    const registry: FunctionRegistry = { foo: emptyReference };
     const config: Config = { useSingleQuotes: true };
 
-    await generateIndexFile(testDir, registry, config);
+    await generateIndexFile(testDir, ['foo'], config);
 
     const content = readGeneratedFile();
     expect(content).toContain(`import { createExportMap } from 'firebase-functions-smart-export';`);

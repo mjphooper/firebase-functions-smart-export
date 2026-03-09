@@ -1,26 +1,23 @@
 # firebase-functions-smart-export
 
   
-Firebase Functions Smart Export ("FFSE" for short) is a dynamic function exporter that streamlines function exporting and aims to improves cold start times. FFSE is a [pure ESM package](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c),
-  
+Firebase Functions Smart Export (FFSE) is a dynamic function exporter that streamlines function exporting and aims to improve cold start times. FFSE is a [pure ESM package](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c).
+
+## Highlights
+
+- ✨ **Zero-boilerplate exports** — Functions are automatically discovered, grouped, and exported based on file structure.
+- ⚡ **Faster cold starts** — Only the dependencies of the invoked function are loaded at runtime, rather than your entire codebase.
+- 📦 **ESM native** — Built from the ground up for modern ES modules.
+
 ## Motivation
-Cold starts in Firebase Functions can be slow, especially as your project grows in dependencies. By default, Node evaluates the entirety of your project before executing any single function, which means even unused code and dependencies can slow down cold starts. There are [some tricks](https://youtu.be/v3eG9xpzNXM) to circumvent this, but these can be cumbersome to maintain as your project grows in size.
 
-A great solution was provided by [better-firebase-functions](https://www.npmjs.com/package/better-firebase-functions) (along with this excellent [article](https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://medium.com/swlh/a-toolkit-to-speed-up-and-optimise-firebase-cloud-functions-part-1-6f74f278660c&ved=2ahUKEwiJ75SB9faOAxX6W0EAHXWnOKgQFnoECB4QAQ&usg=AOvVaw0JcGk46yxFD_BMCb-PG_o_)). However, its lack of ESM support led to the birth of this project with two key improvements:
+Cold starts in Firebase Functions can be slow. By default, Node loads your entire codebase before executing any function—even dependencies that aren't needed.
 
-1. Built from the ground up for **ESM projects**, allowing you to stay up to date with modern tooling.
-2. Uses a prebuilt **function lookup table** to minimize runtime dependencies, enabling a tiny runtime script that resolves modules with as little overhead as possible.
+The Firebase team [recommends lazy-loading](https://youtu.be/v3eG9xpzNXM) function implementations using dynamic `import()` to load only what's needed at runtime. This works well for small projects, but manually wiring up lazy exports becomes a real pain as projects grow in size and complexity. 
 
-## How it works
-  
-🔍   **1.** The CLI tool searches your project for files matching the default glob pattern `*.function` which exports  Firebase Functions with corresponding names. To learn more, see [Exporting functions](#exporting-functions).
+A solution was provided by [better-firebase-functions](https://www.npmjs.com/package/better-firebase-functions), alongside this [excellent explanatory article](https://medium.com/swlh/a-toolkit-to-speed-up-and-optimise-firebase-cloud-functions-part-1-6f74f278660c). However, this package only supports CommonJS. FFSE was created to bring the same benefits to modern ESM projects.
 
-🛠️ **2.**  Two files are then built:
-- `ffse.registry.json` JSON file containing a lookup table of functions and their corresponding module paths.
-- `index.gen.js` Generated code placed in your source directory (auto-detected or configured via `sourceDir`) that exports your functions in an ESM compatible manner.
-
-⚡️**3.**  At runtime, FFSE uses your `ffse.registry.json` and a lightweight script to export only the module required by the instance in which it is running, avoiding the overhead of loading unused dependencies.
-  
+ESM requires static exports at compile, unlike CommonJS which supports dynamic export via `await require(...)`. FFSE solves this with codegen, producing an index file with your exports pre-defined.
 
 ## Quick start
 
@@ -54,6 +51,17 @@ export * from './index.gen.js';
 firebase deploy --only functions
 ```
 
+
+## How it works
+  
+🔍   **1.** The CLI tool searches your project for files matching the default glob pattern `*.function` which exports  Firebase Functions with corresponding names. To learn more, see [Exporting functions](#exporting-functions).
+
+🛠️ **2.**  Two files are then built:
+- `ffse.registry.json` JSON file containing a lookup table of functions and their corresponding module paths.
+- `index.gen.js` Generated code placed in your source directory (auto-detected or configured via `sourceDir`) that exports your functions in an ESM compatible manner.
+
+⚡️**3.**  At runtime, FFSE uses your `ffse.registry.json` and a lightweight script to export only the module required by the instance in which it is running, avoiding the overhead of loading unused dependencies.
+  
 <a name="exporting-functions"></a> 
 ## Exporting functions
 
@@ -105,10 +113,6 @@ export default defineConfig({
 });
 ```
 
-## Performance
-_(To do)_
-The performance of this package is difficult to measure quantitively as it will
-
 ## TypeScript and ESM
 FFSE ships with TypeScript definitions and works straight out of the box in TypeScript projects. By default, FFSE uses `src/` as the source directory and uses `lib/` as the compiled output directory containing your JavaScript files. If your project uses different directories, configure `sourceDir` and `outDir` in your `ffse.config.js`.
 
@@ -116,7 +120,21 @@ FFSE ships with TypeScript definitions and works straight out of the box in Type
 ## Limitations
 - FFSE assumes that your source directory structure matches your output directory structure after compilation. This is the default behavior of TypeScript and most build tools.
 
-  
+## Troubleshooting
+
+### Emulator crash on Node 20.19+ / Node 22+
+
+If the Firebase emulator crashes with `ERR_REQUIRE_ASYNC_MODULE` when loading your functions, this is a [known bug](https://github.com/firebase/firebase-tools/issues/8589) in `firebase-tools`. The emulator tries to `require()` your ESM entry point and doesn't handle the error thrown when the module contains top-level `await`.
+
+A [fix](https://github.com/firebase/firebase-tools/pull/8394) is pending in `firebase-tools`. Until it ships, start the emulator with:
+
+```bash
+NODE_OPTIONS="--no-experimental-require-module" firebase emulators:start
+```
+
+This disables Node's `require(ESM)` feature, restoring the previous behavior where the emulator falls back to dynamic `import()`.
+
+
 <a name="contributing"></a>
 ## Contributing
 
