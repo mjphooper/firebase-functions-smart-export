@@ -1,7 +1,9 @@
 import fs from 'node:fs';
 import { join } from 'node:path';
-import type { Config } from '../../shared/types/config.js';
-import { GENERATED_INDEX_FILE_NAME } from '../constants/generated_index_file_name.js';
+import type { Config } from '../shared/types/config.js';
+
+/** The name of the generated index file. */
+export const GENERATED_INDEX_FILE_NAME = 'index.gen.js';
 
 /**
  * Simple signature for a function that applies a transformation to a `string`.

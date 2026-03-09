@@ -1,8 +1,7 @@
 import fs from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
-import { GENERATED_INDEX_FILE_NAME } from '../../../cli/constants/generated_index_file_name.js';
-import { EMPTY_REGISTRY_ERROR_MESSAGE, generateIndexFile } from '../../../src/cli/codegen/generate_index_file.js';
+import { EMPTY_REGISTRY_ERROR_MESSAGE, GENERATED_INDEX_FILE_NAME, generateIndexFile } from '../../../src/cli/generate_index_file.js';
 import { Config } from '../../../src/shared/types/config.js';
 
 

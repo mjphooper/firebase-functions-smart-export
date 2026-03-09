@@ -3,8 +3,7 @@ import { getConfig } from '../shared/config_loader.js';
 import { findFunctionFiles } from '../shared/find_function_files.js';
 import { getAbsSourceDirPath } from '../shared/paths.js';
 import { styledConsoleOutput } from '../shared/styled_console_log.js';
-import { generateIndexFile } from './codegen/generate_index_file.js';
-import { cleanupGeneratedFiles } from './filesystem/cleanup_generated_files.js';
+import { generateIndexFile } from './generate_index_file.js';
 import { validateFunctions } from './validate_functions.js';
 import { Reporter } from './reporter.js';
 
@@ -44,7 +43,6 @@ export async function main() {
     const absSourcePath = getAbsSourceDirPath(config.sourceDir);
 
     reporter.customConfigLoaded(config);
-    cleanupGeneratedFiles(config.sourceDir);
     reporter.sourcePathResolved(absSourcePath);
     reporter.searchStarted(config);
 

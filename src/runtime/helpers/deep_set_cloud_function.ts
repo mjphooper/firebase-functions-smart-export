@@ -1,6 +1,24 @@
 import { dset } from 'dset/merge';
 import { join } from 'path';
-import { importCloudFunction } from './import_cloud_function';
+
+/**
+ * Dynamically imports a Cloud Function from the given absolute path,
+ * validating that it has a default export.
+ */
+async function importCloudFunction(absPath: string): Promise<object> {
+  const module = await import(absPath);
+  const hasDefaultExport: boolean = module.default != undefined;
+
+  if (!hasDefaultExport) {
+    const https = await import('firebase-functions/https');
+    throw new https.HttpsError(
+      'failed-precondition',
+      `Function at path ${absPath} has no default export. Did you forget to add "export default" to the function definition?`,
+    );
+  }
+
+  return module.default;
+}
 
 /**
  * Dynamically imports a Cloud Function from the given relative path and assigns it

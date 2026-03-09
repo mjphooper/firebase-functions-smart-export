@@ -13,17 +13,18 @@ jest.unstable_mockModule('../../src/shared/function_path_parser.js', async () =>
 jest.unstable_mockModule('../../src/runtime/helpers/get_instance_target_id.js', async () => {
   return { getInstanceTargetId: jest.fn() };
 });
-jest.unstable_mockModule('../../src/runtime/helpers/import_cloud_function.js', async () => {
-  return { importCloudFunction: jest.fn() };
+jest.unstable_mockModule('../../src/runtime/helpers/deep_set_cloud_function.js', async () => {
+  return { deepSetCloudFunction: jest.fn() };
 });
 
 import { jest } from '@jest/globals';
+import { dset } from 'dset/merge';
 const { createExportMap } = await import('../../src/runtime/index.js');
 const { getConfig } = await import('../../src/shared/config_loader.js');
 const { findFunctionFiles } = await import('../../src/shared/find_function_files.js');
 const { parseFunctionIdFromPath, parseExportKeyFromPath } = await import('../../src/shared/function_path_parser.js');
 const { getInstanceTargetId } = await import('../../src/runtime/helpers/get_instance_target_id.js');
-const { importCloudFunction } = await import('../../src/runtime/helpers/import_cloud_function.js');
+const { deepSetCloudFunction } = await import('../../src/runtime/helpers/deep_set_cloud_function.js');
 
 // Fakes
 const fakeCloudFunction: object = { data: 'Hello, I am a Cloud Function.' };
@@ -34,7 +35,7 @@ const mockFindFunctionFiles = findFunctionFiles as jest.Mock;
 const mockParseFunctionIdFromPath = parseFunctionIdFromPath as jest.Mock;
 const mockParseExportKeyFromPath = parseExportKeyFromPath as jest.Mock;
 const mockGetInstanceTargetId = getInstanceTargetId as jest.Mock<() => string | null>;
-const mockImportCloudFunction = importCloudFunction as jest.Mock<(relPath: string) => Promise<object>>;
+const mockDeepSetCloudFunction = deepSetCloudFunction as jest.Mock;
 
 function setupMocks(options: {
   targetId: string | null;
@@ -45,7 +46,12 @@ function setupMocks(options: {
   mockGetConfig.mockResolvedValue({});
   mockFindFunctionFiles.mockReturnValue({ files: options.files, hasMixedFileTypes: false });
   mockGetInstanceTargetId.mockReturnValue(options.targetId);
-  mockImportCloudFunction.mockResolvedValue(fakeCloudFunction);
+  mockDeepSetCloudFunction.mockImplementation(
+    (_relPath: string, exportKey: string, exportMap: Record<string, unknown>) => {
+      dset(exportMap, exportKey, fakeCloudFunction);
+      return Promise.resolve();
+    },
+  );
 
   mockParseFunctionIdFromPath.mockImplementation((filePath: string) => {
     return options.idMap?.[filePath] ?? filePath;
@@ -79,9 +85,12 @@ describe('createExportMap()', () => {
     const result = await createExportMap();
 
     // Assert
-    expect(mockImportCloudFunction).toHaveBeenCalledTimes(1);
-    expect(mockImportCloudFunction).toHaveBeenCalledWith(
-      expect.stringContaining('path/to/target.function.js'),
+    expect(mockDeepSetCloudFunction).toHaveBeenCalledTimes(1);
+    expect(mockDeepSetCloudFunction).toHaveBeenCalledWith(
+      'path/to/target.function.js',
+      'target.function',
+      expect.any(Object),
+      expect.any(String),
     );
     expect(result).toEqual({
       target: {
@@ -105,7 +114,7 @@ describe('createExportMap()', () => {
     const result = await createExportMap();
 
     // Assert
-    expect(mockImportCloudFunction).toHaveBeenCalledTimes(2);
+    expect(mockDeepSetCloudFunction).toHaveBeenCalledTimes(2);
     expect(result).toEqual({
       target: { function: fakeCloudFunction },
       other: { function: fakeCloudFunction },
