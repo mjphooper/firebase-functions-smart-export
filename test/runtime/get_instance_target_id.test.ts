@@ -1,4 +1,4 @@
-import { getInstanceTargetId, getUnexpectedTargetNameErrorMessage } from '../../src/runtime/get_instance_target_id';
+import { getInstanceTargetId, getUnexpectedTargetNameErrorMessage } from '../../src/runtime/get_instance_target_id.js';
 
 type Env = {
   FUNCTION_TARGET?: string,

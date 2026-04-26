@@ -1,5 +1,5 @@
 import { dset } from 'dset/merge';
-import type { ExportMap } from './types/export_map';
+import type { ExportMap } from './types/export_map.js';
 
 /**
  * Builds an {@link ExportMap} from a flat list of `(exportKey, cloudFunction)` entries.

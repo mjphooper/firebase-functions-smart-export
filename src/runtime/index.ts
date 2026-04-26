@@ -1,12 +1,12 @@
 import { join } from 'path';
-import { getConfig } from "../shared/config_loader";
-import { DEFAULT_MATCH_EXTENSION, findFunctionFiles } from "../shared/find_function_files";
-import { parseExportKeyFromPath, parseFunctionIdFromPath } from "../shared/function_path_parser";
-import { getAbsProjectRootPath } from "../shared/paths";
-import { buildExportMap } from "./build_export_map";
-import { getInstanceTargetId } from "./get_instance_target_id";
-import { importCloudFunction } from "./import_cloud_function";
-import type { ExportMap } from "./types/export_map";
+import { getConfig } from "../shared/config_loader.js";
+import { DEFAULT_MATCH_EXTENSION, findFunctionFiles } from "../shared/find_function_files.js";
+import { parseExportKeyFromPath, parseFunctionIdFromPath } from "../shared/function_path_parser.js";
+import { getAbsProjectRootPath } from "../shared/paths.js";
+import { buildExportMap } from "./build_export_map.js";
+import { getInstanceTargetId } from "./get_instance_target_id.js";
+import { importCloudFunction } from "./import_cloud_function.js";
+import type { ExportMap } from "./types/export_map.js";
 
 /**
  * The default output directory containing compiled JavaScript files.
