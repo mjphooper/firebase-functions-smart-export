@@ -10,7 +10,7 @@ export const GENERATED_INDEX_FILE_NAME = 'index.gen.js';
 */
 type StringTransformer = (text: string) => string;
 
-export const EMPTY_REGISTRY_ERROR_MESSAGE =
+export const EMPTY_FUNCTIONS_ERROR_MESSAGE =
   'Cannot generate index file: no functions found. This should not be called with an empty function list.';
 
 /**
@@ -61,7 +61,7 @@ export async function generateIndexFile(
   config: Config,
 ): Promise<void> {
   if (topLevelKeys.length === 0) {
-    throw new Error(EMPTY_REGISTRY_ERROR_MESSAGE);
+    throw new Error(EMPTY_FUNCTIONS_ERROR_MESSAGE);
   }
 
   const contents = [

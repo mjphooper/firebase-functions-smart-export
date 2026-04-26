@@ -40,7 +40,7 @@ function outputWithStyle(message: string, color?: AnsiColor, options: OutputOpti
  * - `success`: Success message in green.
  *
  * Intended for use throughout the CLI for standardized and readable terminal output.
- * 
+ *
  * istanbul ignore next
  */
 export const styledConsoleOutput = {

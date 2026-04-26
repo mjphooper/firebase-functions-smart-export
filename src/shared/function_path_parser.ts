@@ -40,7 +40,7 @@ export function parseExportKeyFromPath(
 }
 
 /**
- * Converts a relative file path to a lowercase function ID used for internal registry storage.
+ * Converts a relative file path to a lowercase function ID.
  *
  * Internally calls `parseExportKeyFromPath`, then lowercases the result.
  */
