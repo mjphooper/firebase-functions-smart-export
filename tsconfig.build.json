@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "",
+    "rootDir": "./src"
+  },
+  "include": [
+    "src/cli",
+    "src/shared"
+  ],
+  "exclude": [
+    "node_modules",
+    "test",
+    "src/runtime"
+  ]
+}

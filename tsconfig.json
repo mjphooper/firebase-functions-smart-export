@@ -5,8 +5,7 @@
     "moduleResolution": "nodenext",
     "noImplicitReturns": true,
     "noUnusedLocals": true,
-    "outDir": "",
-    "rootDir": "./src",
+    "noEmit": true,
     "sourceMap": false,
     "strict": true,
     "strictNullChecks": false,
@@ -16,10 +15,7 @@
     "isolatedModules": true
   },
   "include": [
-    "src/cli",
-    "src/shared",
-  ],
-  "exclude": [
-    "src/runtime",
+    "src",
+    "test"
   ]
 }
