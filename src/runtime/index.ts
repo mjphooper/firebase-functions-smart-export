@@ -3,8 +3,9 @@ import { getConfig } from "../shared/config_loader";
 import { DEFAULT_MATCH_EXTENSION, findFunctionFiles } from "../shared/find_function_files";
 import { parseExportKeyFromPath, parseFunctionIdFromPath } from "../shared/function_path_parser";
 import { getAbsProjectRootPath } from "../shared/paths";
-import { deepSetCloudFunction } from "./helpers/deep_set_cloud_function";
-import { getInstanceTargetId } from "./helpers/get_instance_target_id";
+import { buildExportMap } from "./build_export_map";
+import { getInstanceTargetId } from "./get_instance_target_id";
+import { importCloudFunction } from "./import_cloud_function";
 import type { ExportMap } from "./types/export_map";
 
 /**
@@ -31,31 +32,35 @@ export async function createExportMap(): Promise<ExportMap> {
   const matchExtension = config.matchExtension ?? DEFAULT_MATCH_EXTENSION;
 
   const { files } = findFunctionFiles(absOutDir, matchExtension);
-
   const targetId = getInstanceTargetId(process.env);
-  const exportMap: ExportMap = {};
 
-  if (targetId) {
+  // If this instance has no target (deploy), export all functions.
+  if (!targetId) {
+    const entries = [];
     for (const filePath of files) {
-      const functionId = parseFunctionIdFromPath(filePath, config);
-      if (functionId === targetId) {
-        const exportKey = parseExportKeyFromPath(filePath, config);
-        await deepSetCloudFunction(filePath, exportKey, exportMap, absOutDir);
-        return exportMap;
-      }
+      entries.push({
+        exportKey: parseExportKeyFromPath(filePath, config),
+        cloudFunction: await importCloudFunction(join(absOutDir, filePath)),
+      });
     }
+    return buildExportMap(entries);
+  }
 
+  // Find the file path of the exported function.
+  const filePath = files.find(
+    (path) => parseFunctionIdFromPath(path, config) === targetId,
+  );
+
+  if (!filePath) {
     const https = await import('firebase-functions/https');
     throw new https.HttpsError(
       'not-found',
       `Function "${targetId}" not found in ${outDir}/. Have you compiled your functions?`,
-    );
-  } else {
-    for (const filePath of files) {
-      const exportKey = parseExportKeyFromPath(filePath, config);
-      await deepSetCloudFunction(filePath, exportKey, exportMap, absOutDir);
-    }
+    )
   }
 
-  return exportMap;
+  return buildExportMap([{
+    exportKey: parseExportKeyFromPath(filePath, config),
+    cloudFunction: await importCloudFunction(join(absOutDir, filePath)),
+  }]);
 }

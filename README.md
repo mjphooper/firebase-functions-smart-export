@@ -34,7 +34,7 @@ import { onCall } from 'firebase-functions/v2/https';
 export default onCall({...});
 ```
 
-3. Run the CLI tool (and every time you modify your functions) to build your function registry.
+3. Run the CLI tool (and every time you modify your functions) to generate your exports.
 ```bash
 npx ffse
 ```
@@ -56,11 +56,9 @@ firebase deploy --only functions
   
 🔍   **1.** The CLI tool searches your project for files matching the default glob pattern `*.function` which exports  Firebase Functions with corresponding names. To learn more, see [Exporting functions](#exporting-functions).
 
-🛠️ **2.**  Two files are then built:
-- `ffse.registry.json` JSON file containing a lookup table of functions and their corresponding module paths.
-- `index.gen.js` Generated code placed in your source directory (auto-detected or configured via `sourceDir`) that exports your functions in an ESM compatible manner.
+🛠️ **2.**  An `index.gen.js` file is generated in your source directory (auto-detected or configured via `sourceDir`) that exports your functions in an ESM compatible manner.
 
-⚡️**3.**  At runtime, FFSE uses your `ffse.registry.json` and a lightweight script to export only the module required by the instance in which it is running, avoiding the overhead of loading unused dependencies.
+⚡️**3.**  At runtime, FFSE dynamically discovers your function files and exports only the module required by the instance in which it is running, avoiding the overhead of loading unused dependencies.
   
 <a name="exporting-functions"></a> 
 ## Exporting functions

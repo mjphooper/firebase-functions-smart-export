@@ -6,6 +6,7 @@
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "outDir": "",
+    "rootDir": "./src",
     "sourceMap": false,
     "strict": true,
     "strictNullChecks": false,

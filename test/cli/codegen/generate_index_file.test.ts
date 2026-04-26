@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
-import { EMPTY_REGISTRY_ERROR_MESSAGE, GENERATED_INDEX_FILE_NAME, generateIndexFile } from '../../../src/cli/generate_index_file.js';
+import { EMPTY_FUNCTIONS_ERROR_MESSAGE, GENERATED_INDEX_FILE_NAME, generateIndexFile } from '../../../src/cli/generate_index_file.js';
 import { Config } from '../../../src/shared/types/config.js';
 
 
@@ -26,7 +26,7 @@ describe('generateIndexFile()', () => {
   test('throws if the top-level keys list is empty', async () => {
     // Act & Assert
     await expect(generateIndexFile(testDir, [], doubleQuoteConfig)).rejects.toThrow(
-      EMPTY_REGISTRY_ERROR_MESSAGE
+      EMPTY_FUNCTIONS_ERROR_MESSAGE
     );
   });
 

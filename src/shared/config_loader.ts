@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import { getAbsProjectRootPath } from './paths.js';
-import { styledConsoleOutput } from './styled_console_log.js';
 import type { Config } from './types/config.js';
 
 /** The name of the user created configuration file. */
@@ -23,7 +22,7 @@ export async function importConfig(modulePath: string): Promise<Config> {
   const defaultExport: unknown = await getModuleDefault(modulePath);
 
   if (defaultExport == undefined) {
-    styledConsoleOutput.warn('A config file exists with no default export.\nDid you forget to write `export default defineConfig...`?')
+    console.warn('A config file exists with no default export.\nDid you forget to write `export default defineConfig...`?')
     return {};
   }
 
