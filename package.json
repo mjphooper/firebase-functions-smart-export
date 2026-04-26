@@ -29,7 +29,7 @@
     "firebase-functions-smart-export": "./bin/ffse.js"
   },
   "scripts": {
-    "build": "rm -r -f dist && rm -r -f cli && rm -r -f shared  && tsc && npm run esbuild:src",
+    "build": "rm -r -f dist && rm -r -f cli && rm -r -f shared  && tsc -p tsconfig.build.json && npm run esbuild:src",
     "esbuild:src": "esbuild src/runtime/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js --format=esm --external:firebase-functions",
     "visualize": "tree -I 'node_modules' -o project_tree.txt",
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest"
