@@ -31,8 +31,8 @@ const fakeCloudFunction: object = { data: 'Hello, I am a Cloud Function.' };
 // Mocks
 const mockGetConfig = getConfig as jest.Mock<() => Promise<object>>;
 const mockFindFunctionFiles = findFunctionFiles as jest.Mock;
-const mockParseFunctionIdFromPath = parseFunctionIdFromPath as jest.Mock;
-const mockParseExportKeyFromPath = parseExportKeyFromPath as jest.Mock;
+const mockParseFunctionIdFromPath = parseFunctionIdFromPath as jest.Mock<(filePath: string) => string>;
+const mockParseExportKeyFromPath = parseExportKeyFromPath as jest.Mock<(filePath: string) => string>;
 const mockGetInstanceTargetId = getInstanceTargetId as jest.Mock<() => string | null>;
 const mockImportCloudFunction = importCloudFunction as jest.Mock<() => Promise<object>>;
 

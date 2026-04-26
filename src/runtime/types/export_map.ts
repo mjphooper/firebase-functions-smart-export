@@ -1,5 +1,3 @@
-import type { FunctionGroupOrName } from "../../shared/types/function_id";
-
 /**
  * A nested object where each leaf is either:
  * - An `object`, representing a Firebase function created by the user.
@@ -7,5 +5,5 @@ import type { FunctionGroupOrName } from "../../shared/types/function_id";
  * functions instance.
  */
 export type ExportMap = {
-  [segment: FunctionGroupOrName]: (object | undefined) | ExportMap;
+  [segment: string]: object | undefined | ExportMap;
 };
