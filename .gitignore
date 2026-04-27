@@ -11,3 +11,6 @@ node_modules/
 .obsidian/
 
 .DS_Store
+
+# Firebase
+firebase-debug.log
