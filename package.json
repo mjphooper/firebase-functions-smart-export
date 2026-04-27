@@ -31,8 +31,7 @@
   "scripts": {
     "build": "rm -r -f dist && rm -r -f cli && rm -r -f shared  && tsc -p tsconfig.build.json && npm run esbuild:src",
     "esbuild:src": "esbuild src/runtime/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js --format=esm --external:firebase-functions",
-    "visualize": "tree -I 'node_modules' -o project_tree.txt",
-    "test": "NODE_OPTIONS='--experimental-vm-modules' jest"
+    "test": "mocha"
   },
   "main": "dist/index.js",
   "type": "module",
@@ -45,12 +44,16 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
-    "@types/jest": "^30.0.0",
+    "@types/chai": "^5.2.3",
+    "@types/chai-as-promised": "^8.0.2",
+    "@types/mocha": "^10.0.10",
+    "@types/sinon": "^21.0.1",
+    "chai": "^6.2.2",
+    "chai-as-promised": "^8.0.2",
     "esbuild": "^0.25.8",
     "eslint": "^9.32.0",
-    "jest": "^30.0.5",
-    "ts-jest": "^29.4.1",
-    "ts-jest-resolver": "^2.0.1",
+    "mocha": "^11.7.5",
+    "sinon": "^21.1.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0"

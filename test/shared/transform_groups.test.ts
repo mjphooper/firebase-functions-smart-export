@@ -1,58 +1,43 @@
+import { expect } from 'chai';
 import { transformGroups } from "../../src/shared/transform_groups.js";
 import { Config } from "../../src/shared/types/config.js";
 
-
-
-test('has no effect when the config is empty', () => {
-  // Arrange
+it('has no effect when the config is empty', () => {
   const config: Config = {};
 
-  // Act
   const result = transformGroups(['foo', 'bar'], config);
 
-  // Assert
-  expect(result).toEqual(['foo', 'bar']);
+  expect(result).to.deep.equal(['foo', 'bar']);
 });
 
 describe('when ignored groups are given', () => {
-
-  test('removes ignored groups', () => {
-    // Arrange
+  it('removes ignored groups', () => {
     const config: Config = { ignoreGroups: ['ignored'] };
 
-    // Act
     const result = transformGroups(['foo', 'ignored', 'bar'], config);
 
-    // Assert
-    expect(result).toEqual(['foo', 'bar']);
+    expect(result).to.deep.equal(['foo', 'bar']);
   });
 
-  test('has no effect when the `ignoreGroups` array is empty', () => {
-    // Arrange
+  it('has no effect when the `ignoreGroups` array is empty', () => {
     const config: Config = { ignoreGroups: [] };
 
-    // Act
     const result = transformGroups(['foo', 'ignored', 'bar'], config);
 
-    // Assert
-    expect(result).toEqual(['foo', 'ignored', 'bar']);
-  })
+    expect(result).to.deep.equal(['foo', 'ignored', 'bar']);
+  });
 });
 
 describe('when a group mapping function is provided', () => {
-  test('applies the group mapping function', () => {
-    // Arrange
+  it('applies the group mapping function', () => {
     const config: Config = { mapGroups: groups => groups.map(g => g + '_mapped') };
 
-    // Act
     const result = transformGroups(['a', 'b'], config);
 
-    // Assert
-    expect(result).toEqual(['a_mapped', 'b_mapped']);
+    expect(result).to.deep.equal(['a_mapped', 'b_mapped']);
   });
 
-  test('applies the group mapping function last', () => {
-    // Arrange
+  it('applies the group mapping function last', () => {
     const groups = ['a', 'b', 'c', 'd'];
     const config: Config = {
       ignoreGroups: ['a', 'b'],
@@ -60,45 +45,33 @@ describe('when a group mapping function is provided', () => {
       mapGroups: groups => groups.map(g => g + '_mapped'),
     };
 
-    // Act
     const result = transformGroups(groups, config);
 
-    // Assert
-    expect(result).toEqual(['c_mapped']);
+    expect(result).to.deep.equal(['c_mapped']);
   });
 });
 
 describe('when a max group depth is set', () => {
-
-  test('limits group depth', () => {
-    // Arrange
+  it('limits group depth', () => {
     const groups = ['a', 'b', 'c'];
     const config: Config = { maxGroupDepth: 1 };
 
-    // Act
     const result = transformGroups(groups, config);
 
-    // Assert
-    expect(result).toEqual(['a'])
+    expect(result).to.deep.equal(['a']);
   });
 
-  test.each([
-    0,
-    -10,
-    -Number.MAX_SAFE_INTEGER,
-  ])('throws when the max depth is set to %s', (maxDepth) => {
-    // Arrange
-    const config: Config = { maxGroupDepth: maxDepth };
+  for (const maxDepth of [0, -10, -Number.MAX_SAFE_INTEGER]) {
+    it(`throws when the max depth is set to ${maxDepth}`, () => {
+      const config: Config = { maxGroupDepth: maxDepth };
 
-    // Act & Assert
-    expect(() => transformGroups([], config)).toThrow();
-  });
+      expect(() => transformGroups([], config)).to.throw();
+    });
+  }
 });
 
 describe('when groups are disabled', () => {
-
-  test('returns an empty array', () => {
-    // Arrange
+  it('returns an empty array', () => {
     const groups = ['a', 'b', 'c'];
     const config: Config = {
       disableGroups: true,
@@ -106,11 +79,8 @@ describe('when groups are disabled', () => {
       maxGroupDepth: 1,
     };
 
-    // Act
     const result = transformGroups(groups, config);
 
-    // Assert
-    expect(result).toHaveLength(0);
+    expect(result).to.have.lengthOf(0);
   });
-
 });

@@ -1,0 +1,3 @@
+loader: ts-node/esm
+spec: "test/**/*.test.ts"
+timeout: 5000
