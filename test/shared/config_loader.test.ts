@@ -1,14 +1,17 @@
-import { jest } from '@jest/globals';
+import { expect, use } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 import fs from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { getConfig } from '../../src/shared/config_loader.js';
 import { Config } from '../../src/shared/types/config.js';
 
-describe('config_loader', () => {
+use(chaiAsPromised);
 
+describe('config_loader', () => {
   const __dirname = dirname(fileURLToPath(import.meta.url));
-  const fixturesPath = resolve(__dirname, 'temp_config_loader');
+  let fixturesPath: string;
+  let testCounter = 0;
 
   function createFakeConfigFile(config: unknown): void {
     const filePath = resolve(fixturesPath, 'ffse.config.js');
@@ -16,53 +19,42 @@ describe('config_loader', () => {
     fs.writeFileSync(filePath, contents);
   }
 
-
   beforeEach(() => {
+    testCounter++;
+    fixturesPath = resolve(__dirname, `temp_config_loader_${testCounter}`);
     fs.mkdirSync(fixturesPath, { recursive: true });
   });
 
   afterEach(async () => {
     await fs.promises.rm(fixturesPath, { recursive: true, force: true });
-    jest.resetModules();
   });
 
   it('loads config if the file exists', async () => {
-    // Arrange
     const fileConfig: Config = { useSingleQuotes: true };
     createFakeConfigFile(fileConfig);
 
-    // Act
-    const config = await getConfig(fixturesPath)
+    const config = await getConfig(fixturesPath);
 
-    // Assert
-    expect(config).toEqual(fileConfig);
+    expect(config).to.deep.equal(fileConfig);
   });
 
   it('returns an empty object if the config file does not exist', async () => {
-    // Act
-    const config = await getConfig(fixturesPath)
+    const config = await getConfig(fixturesPath);
 
-    // Assert
-    expect(config).toEqual({});
+    expect(config).to.deep.equal({});
   });
 
   it('returns an empty object if the file does not have a default export', async () => {
-    // Arrange
     createFakeConfigFile(undefined);
 
-    // Act
-    const config = await getConfig(fixturesPath)
+    const config = await getConfig(fixturesPath);
 
-    // Assert
-    expect(config).toEqual({});
+    expect(config).to.deep.equal({});
   });
 
   it('throws if default export is not an object', async () => {
-    // Arrange
     createFakeConfigFile(10);
 
-    // Act & Assert
-    expect(() => getConfig(fixturesPath)).rejects.toThrow();
+    await expect(getConfig(fixturesPath)).to.be.rejectedWith(Error);
   });
-
 });

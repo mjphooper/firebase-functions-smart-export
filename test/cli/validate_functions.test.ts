@@ -1,101 +1,79 @@
+import { expect } from 'chai';
 import { validateFunctions } from '../../src/cli/validate_functions.js';
 import { Config } from '../../src/shared/types/config.js';
 
 describe('validateFunctions()', () => {
   const emptyConfig: Config = {};
 
-  test('returns empty results when files are empty', () => {
-    // Arrange
+  it('returns empty results when files are empty', () => {
     const files: string[] = [];
 
-    // Act
     const { topLevelKeys, functions } = validateFunctions(files, emptyConfig);
 
-    // Assert
-    expect(topLevelKeys).toHaveLength(0);
-    expect(functions).toHaveLength(0);
+    expect(topLevelKeys).to.have.lengthOf(0);
+    expect(functions).to.have.lengthOf(0);
   });
 
-  test('returns correct number of functions', () => {
-    // Arrange
+  it('returns correct number of functions', () => {
     const files = ['a/b/c.function.js', 'd/e/f.function.js'];
 
-    // Act
     const { functions } = validateFunctions(files, emptyConfig);
 
-    // Assert
-    expect(functions).toHaveLength(2);
+    expect(functions).to.have.lengthOf(2);
   });
 
-  test('extracts top-level keys from function IDs', () => {
-    // Arrange
+  it('extracts top-level keys from function IDs', () => {
     const files = [
       'events/callable/create.function.js',
       'events/callable/delete.function.js',
       'users/triggers/onCreate.function.js',
     ];
 
-    // Act
     const { topLevelKeys } = validateFunctions(files, emptyConfig);
 
-    // Assert
-    expect(topLevelKeys).toEqual(expect.arrayContaining(['events', 'users']));
-    expect(topLevelKeys).toHaveLength(2);
+    expect(topLevelKeys).to.include.members(['events', 'users']);
+    expect(topLevelKeys).to.have.lengthOf(2);
   });
 
-  test('throws error if function ID exceeds character limit', () => {
-    // Arrange
+  it('throws error if function ID exceeds character limit', () => {
     const longName = 'a'.repeat(100);
     const files = [`very/long/path/${longName}.function.js`];
 
-    // Act & Assert
-    expect(() => validateFunctions(files, emptyConfig)).toThrow(
-      /exceeds the 62 character limit/
-    );
+    expect(() => validateFunctions(files, emptyConfig)).to.throw(/exceeds the 62 character limit/);
   });
 
-  test('stores unmodified file path in each validated function', () => {
-    // Arrange
+  it('stores unmodified file path in each validated function', () => {
     const file = `a/b/c.function.js`;
 
-    // Act
     const { functions } = validateFunctions([file], emptyConfig);
 
-    // Assert
-    expect(functions[0].filePath).toBe(file);
+    expect(functions[0].filePath).to.equal(file);
   });
 
-  test('throws error on duplicate function IDs', () => {
-    // Arrange
+  it('throws error on duplicate function IDs', () => {
     const files = new Array(2).fill('messages/callable/sendMessage.function.js');
 
-    // Act & Assert
-    expect(() => validateFunctions(files, emptyConfig)).toThrow(
-      /The same function name/
-    );
+    expect(() => validateFunctions(files, emptyConfig)).to.throw(/The same function name/);
   });
 
-  test.each([
+  for (const [label, file] of [
     ['camelCase', 'events/fsTriggers/onEvent.function.js'],
     ['kebab-case', 'events/fs-triggers/on-event.function.js'],
     ['snake_case', 'events/fs_triggers/on_event.function.js'],
     ['a mix of cases', 'events/fsTriggers/on_event.function.js'],
-  ])('includes correct export key for %s file paths', (_, file) => {
-    // Act
-    const { functions } = validateFunctions([file], emptyConfig);
+  ] as const) {
+    it(`includes correct export key for ${label} file paths`, () => {
+      const { functions } = validateFunctions([file], emptyConfig);
 
-    // Assert
-    expect(functions[0].exportKey).toBe('events.fsTriggers.onEvent');
-  });
+      expect(functions[0].exportKey).to.equal('events.fsTriggers.onEvent');
+    });
+  }
 
-  test('sets export key equal to function ID for all-lowercase paths', () => {
-    // Arrange
+  it('sets export key equal to function ID for all-lowercase paths', () => {
     const file = 'events/scheduled/clear.function.js';
 
-    // Act
     const { functions } = validateFunctions([file], emptyConfig);
 
-    // Assert
-    expect(functions[0].functionId).toBe(functions[0].exportKey);
+    expect(functions[0].functionId).to.equal(functions[0].exportKey);
   });
 });

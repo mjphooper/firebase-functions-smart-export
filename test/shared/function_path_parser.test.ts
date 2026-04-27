@@ -1,80 +1,79 @@
+import { expect } from 'chai';
 import { parseExportKeyFromPath, parseFunctionIdFromPath } from "../../src/shared/function_path_parser.js";
 import { Config } from "../../src/shared/types/config.js";
-
-
 
 describe('parseExportKeyFromPath()', () => {
   const emptyConfig: Config = {};
 
-  test('transforms a lowercase path to an export key', () => {
+  it('transforms a lowercase path to an export key', () => {
     const path = 'a/b/c.function.js';
     const result = parseExportKeyFromPath(path, emptyConfig);
-    expect(result).toBe('a.b.c');
+    expect(result).to.equal('a.b.c');
   });
 
-  test.each([
+  for (const [label, path] of [
     ['camelCase', 'events/fsTriggers/onEvent.function.js'],
     ['kebab-case', 'events/fs-triggers/on-event.function.js'],
     ['snake_case', 'events/fs_triggers/on_event.function.js'],
     ['a mix of cases', 'events/fsTriggers/on_event.function.js'],
-  ])('transform %s path to a camelCase export key', (_, path) => {
-    const result = parseExportKeyFromPath(path, emptyConfig);
-    expect(result).toBe('events.fsTriggers.onEvent');
-  });
+  ] as const) {
+    it(`transforms ${label} path to a camelCase export key`, () => {
+      const result = parseExportKeyFromPath(path, emptyConfig);
+      expect(result).to.equal('events.fsTriggers.onEvent');
+    });
+  }
 
-  test('applies group transforms from config', () => {
+  it('applies group transforms from config', () => {
     const path = 'redundant/path/to/file/yawn/someFunction.function.js';
-    const groupTransformingConfig: Config = {
-      ignoreGroups: ['redundant', 'yawn'],
-    };
+    const groupTransformingConfig: Config = { ignoreGroups: ['redundant', 'yawn'] };
     const result = parseExportKeyFromPath(path, groupTransformingConfig);
-    expect(result).toBe('path.to.file.someFunction');
+    expect(result).to.equal('path.to.file.someFunction');
   });
 
   describe('when file extension is wrong', () => {
-    test('throws if file extension is missing', () => {
+    it('throws if file extension is missing', () => {
       const path = 'foo/bar';
-      expect(() => parseExportKeyFromPath(path, emptyConfig)).toThrow();
+      expect(() => parseExportKeyFromPath(path, emptyConfig)).to.throw();
     });
 
-    test('throws if the file does not use .js', () => {
-      const path = 'foo/bar.function.ts'
-      expect(() => parseExportKeyFromPath(path, emptyConfig)).toThrow();
+    it('throws if the file does not use .js', () => {
+      const path = 'foo/bar.function.ts';
+      expect(() => parseExportKeyFromPath(path, emptyConfig)).to.throw();
     });
 
-    test('throws if the file extension is the wrong format', () => {
+    it('throws if the file extension is the wrong format', () => {
       const path = 'foo/bar.js.function';
-      expect(() => parseExportKeyFromPath(path, emptyConfig)).toThrow();
+      expect(() => parseExportKeyFromPath(path, emptyConfig)).to.throw();
     });
   });
 });
 
 describe('parseFunctionIdFromPath()', () => {
-  test('returns a lowercase function ID', () => {
+  it('returns a lowercase function ID', () => {
     const path = 'primaryGroup/subGroup/myFunction.function.js';
     const result = parseFunctionIdFromPath(path, {});
-    expect(result).toBe('primarygroup.subgroup.myfunction');
+    expect(result).to.equal('primarygroup.subgroup.myfunction');
   });
 });
 
 describe('Windows path handling', () => {
   const emptyConfig: Config = {};
 
-  test('handles Windows-style backslash paths', () => {
+  it('handles Windows-style backslash paths', () => {
     const path = 'group\\subgroup\\func.function.js';
     const result = parseExportKeyFromPath(path, emptyConfig);
-    expect(result).toBe('group.subgroup.func');
+    expect(result).to.equal('group.subgroup.func');
   });
 
-  test('handles mixed slash styles', () => {
+  it('handles mixed slash styles', () => {
     const path = 'group/subgroup\\func.function.js';
     const result = parseExportKeyFromPath(path, emptyConfig);
-    expect(result).toBe('group.subgroup.func');
+    expect(result).to.equal('group.subgroup.func');
   });
 
-  test('handles Windows paths with parseFunctionIdFromPath', () => {
+  it('handles Windows paths with parseFunctionIdFromPath', () => {
     const path = 'primaryGroup\\subGroup\\myFunction.function.js';
     const result = parseFunctionIdFromPath(path, emptyConfig);
-    expect(result).toBe('primarygroup.subgroup.myfunction');
+    expect(result).to.equal('primarygroup.subgroup.myfunction');
   });
 });
