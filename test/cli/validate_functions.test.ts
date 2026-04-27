@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { validateFunctions } from '../../src/cli/validate_functions.js';
-import { Config } from '../../src/shared/types/config.js';
+import { Config } from '../../src/cli/types/config.js';
 
 describe('validateFunctions()', () => {
   const emptyConfig: Config = {};
