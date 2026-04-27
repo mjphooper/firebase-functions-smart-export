@@ -1,15 +1,23 @@
+import { expect, use } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 import fs from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { EMPTY_FUNCTIONS_ERROR_MESSAGE, GENERATED_INDEX_FILE_NAME, generateIndexFile } from '../../../src/cli/generate_index_file.js';
+import type { ValidatedFunction } from '../../../src/cli/validate_functions.js';
 import { Config } from '../../../src/shared/types/config.js';
 
+use(chaiAsPromised);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const testDir = resolve(__dirname, '../temp_fixtures')
+const testDir = resolve(__dirname, '../temp_fixtures');
 
 function readGeneratedFile() {
   return fs.readFileSync(resolve(testDir, GENERATED_INDEX_FILE_NAME), 'utf8');
+}
+
+function makeFunction(exportKey: string, filePath: string): ValidatedFunction {
+  return { functionId: exportKey.toLowerCase(), exportKey, filePath };
 }
 
 describe('generateIndexFile()', () => {
@@ -23,39 +31,61 @@ describe('generateIndexFile()', () => {
     await fs.promises.rmdir(testDir, { recursive: true });
   });
 
-  test('throws if the top-level keys list is empty', async () => {
-    // Act & Assert
-    await expect(generateIndexFile(testDir, [], doubleQuoteConfig)).rejects.toThrow(
-      EMPTY_FUNCTIONS_ERROR_MESSAGE
+  it('throws if the functions list is empty', async () => {
+    await expect(generateIndexFile(testDir, [], doubleQuoteConfig)).to.be.rejectedWith(
+      EMPTY_FUNCTIONS_ERROR_MESSAGE,
     );
   });
 
-  test('writes imports and exportMap initialization', async () => {
-    // Act
-    await generateIndexFile(testDir, ['foo'], doubleQuoteConfig);
+  it('writes imports and functionMap initialization', async () => {
+    await generateIndexFile(testDir, [makeFunction('foo', 'foo.function.js')], doubleQuoteConfig);
 
-    // Expect
     const content = readGeneratedFile();
-    expect(content).toContain('import { createExportMap } from "firebase-functions-smart-export";');
-    expect(content).toContain('const exportMap = await createExportMap();');
+    expect(content).to.contain('import { createExportMap } from "firebase-functions-smart-export";');
+    expect(content).to.contain('const functionMap = {');
+    expect(content).to.contain('const exportMap = await createExportMap(functionMap);');
   });
 
-  test('writes named exports for each top-level key', async () => {
-    // Act
-    await generateIndexFile(testDir, ['foo', 'bar'], doubleQuoteConfig);
+  it('writes functionMap entries with project-root-relative paths', async () => {
+    await generateIndexFile(
+      testDir,
+      [makeFunction('auth.onCreate', 'auth/onCreate.function.js')],
+      doubleQuoteConfig,
+    );
 
-    // Assert
     const content = readGeneratedFile();
-    expect(content).toContain('export const foo = exportMap.foo;');
-    expect(content).toContain('export const bar = exportMap.bar;');
+    expect(content).to.contain('"auth.onCreate": "lib/auth/onCreate.function.js"');
   });
 
-  test('quote style reflects config', async () => {
+  it('uses custom outDir from config', async () => {
+    const config: Config = { outDir: 'build' };
+    await generateIndexFile(
+      testDir,
+      [makeFunction('auth.onCreate', 'auth/onCreate.function.js')],
+      config,
+    );
+
+    const content = readGeneratedFile();
+    expect(content).to.contain('"auth.onCreate": "build/auth/onCreate.function.js"');
+  });
+
+  it('writes named exports for each top-level key', async () => {
+    await generateIndexFile(
+      testDir,
+      [makeFunction('foo.bar', 'foo/bar.function.js'), makeFunction('baz.qux', 'baz/qux.function.js')],
+      doubleQuoteConfig,
+    );
+
+    const content = readGeneratedFile();
+    expect(content).to.contain('export const foo = exportMap.foo;');
+    expect(content).to.contain('export const baz = exportMap.baz;');
+  });
+
+  it('quote style reflects config', async () => {
     const config: Config = { useSingleQuotes: true };
-
-    await generateIndexFile(testDir, ['foo'], config);
+    await generateIndexFile(testDir, [makeFunction('foo', 'foo.function.js')], config);
 
     const content = readGeneratedFile();
-    expect(content).toContain(`import { createExportMap } from 'firebase-functions-smart-export';`);
+    expect(content).to.contain(`import { createExportMap } from 'firebase-functions-smart-export';`);
   });
 });
