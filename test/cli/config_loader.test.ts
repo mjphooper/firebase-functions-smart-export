@@ -4,7 +4,7 @@ import fs from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { getConfig } from '../../src/cli/config_loader.js';
-import { Config } from '../../src/cli/types/config.js';
+import { Config } from '../../src/cli/config.js';
 
 use(chaiAsPromised);
 

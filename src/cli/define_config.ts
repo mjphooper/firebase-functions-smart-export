@@ -1,5 +1,7 @@
-import type { Config } from './types/config.js';
+import type { Config } from './config.js';
 /* istanbul ignore file */
+
+export type { Config } from './config.js';
 
 /**
  * Defines a Firebase Functions Smart Export configuration object.

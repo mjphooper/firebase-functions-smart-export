@@ -1,7 +1,6 @@
 import { camelCase } from "change-case";
 import slash from "slash";
-import type { Config } from "./types/config.js";
-import type { FunctionExportKey, FunctionId } from "./types/function_id.js";
+import type { Config } from "./config.js";
 import { transformGroups } from "./transform_groups.js";
 
 /**
@@ -21,7 +20,7 @@ import { transformGroups } from "./transform_groups.js";
 export function parseExportKeyFromPath(
   filePath: string,
   config: Config,
-): FunctionExportKey {
+): string {
   const splitPath = slash(filePath).split('/');
 
   const fileName = splitPath.pop();
@@ -47,6 +46,6 @@ export function parseExportKeyFromPath(
 export function parseFunctionIdFromPath(
   relPath: string,
   config: Config,
-): FunctionId {
+): string {
   return parseExportKeyFromPath(relPath, config).toLowerCase();
 }

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { parseExportKeyFromPath, parseFunctionIdFromPath } from "../../src/cli/function_path_parser.js";
-import { Config } from "../../src/cli/types/config.js";
+import { Config } from "../../src/cli/config.js";
 
 describe('parseExportKeyFromPath()', () => {
   const emptyConfig: Config = {};

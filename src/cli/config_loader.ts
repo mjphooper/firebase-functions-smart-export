@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import { getAbsProjectRootPath } from './paths.js';
-import type { Config } from './types/config.js';
+import type { Config } from './config.js';
 
 /** The name of the user created configuration file. */
 export const CONFIG_FILE_NAME = 'ffse.config.js';
