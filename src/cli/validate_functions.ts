@@ -1,5 +1,5 @@
-import type { Config } from '../shared/types/config.js';
-import { parseExportKeyFromPath, parseFunctionIdFromPath } from '../shared/function_path_parser.js';
+import type { Config } from './types/config.js';
+import { parseExportKeyFromPath, parseFunctionIdFromPath } from './function_path_parser.js';
 
 /**
  * The maximum number of characters in a function ID. This includes both the groups

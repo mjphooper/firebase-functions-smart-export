@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { Config } from '../shared/types/config.js';
+import type { Config } from './types/config.js';
 import type { ValidatedFunction } from './validate_functions.js';
 
 /** The name of the generated index file. */

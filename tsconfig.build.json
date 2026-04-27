@@ -1,4 +1,4 @@
-// Build config for the CLI/shared output (tsc); src/runtime is bundled separately by esbuild.
+// Build config for the CLI output (tsc); src/runtime is bundled separately by esbuild.
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
@@ -7,8 +7,7 @@
     "rootDir": "./src"
   },
   "include": [
-    "src/cli",
-    "src/shared"
+    "src/cli"
   ],
   "exclude": [
     "node_modules",

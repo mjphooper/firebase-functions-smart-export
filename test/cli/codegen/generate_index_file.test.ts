@@ -5,7 +5,7 @@ import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { EMPTY_FUNCTIONS_ERROR_MESSAGE, GENERATED_INDEX_FILE_NAME, generateIndexFile } from '../../../src/cli/generate_index_file.js';
 import type { ValidatedFunction } from '../../../src/cli/validate_functions.js';
-import { Config } from '../../../src/shared/types/config.js';
+import { Config } from '../../../src/cli/types/config.js';
 
 use(chaiAsPromised);
 

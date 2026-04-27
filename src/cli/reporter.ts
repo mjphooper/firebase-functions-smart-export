@@ -1,5 +1,5 @@
 import { styledConsoleOutput } from './styled_console_log.js';
-import { Config } from '../shared/types/config.js';
+import { Config } from './types/config.js';
 import type { ValidatedFunction } from './validate_functions.js';
 
 /**

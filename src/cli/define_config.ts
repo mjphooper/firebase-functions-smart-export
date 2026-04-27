@@ -1,4 +1,4 @@
-import type { Config } from '../shared/types/config.js';
+import type { Config } from './types/config.js';
 /* istanbul ignore file */
 
 /**

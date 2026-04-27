@@ -19,7 +19,6 @@
   "files": [
     "bin/",
     "cli/",
-    "shared/",
     "runtime.bundle.js"
   ],
   "homepage": "https://<organization/user>.github.io/<project>/",
@@ -29,7 +28,7 @@
     "firebase-functions-smart-export": "./bin/ffse.js"
   },
   "scripts": {
-    "build": "rm -r -f cli && rm -r -f shared && rm -f runtime.bundle.js && tsc -p tsconfig.build.json && npm run esbuild:src",
+    "build": "rm -r -f cli && rm -f runtime.bundle.js && tsc -p tsconfig.build.json && npm run esbuild:src",
     "esbuild:src": "esbuild src/runtime/index.ts --bundle --platform=node --target=node18 --outfile=runtime.bundle.js --format=esm --external:firebase-functions",
     "pretest": "npm run build",
     "test": "mocha"
