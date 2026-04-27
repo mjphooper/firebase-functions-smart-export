@@ -1,5 +1,4 @@
 import { join } from 'path';
-import { getAbsProjectRootPath } from "../shared/paths.js";
 import { buildExportMap } from "./build_export_map.js";
 import { getInstanceTargetId } from "./get_instance_target_id.js";
 import { importCloudFunction } from "./import_cloud_function.js";
@@ -11,11 +10,10 @@ export async function createExportMap(
     getInstanceTargetId,
     importCloudFunction,
     buildExportMap,
-    getAbsProjectRootPath,
   },
 ): Promise<ExportMap> {
   const targetId = deps.getInstanceTargetId(process.env);
-  const projectRoot = deps.getAbsProjectRootPath();
+  const projectRoot = process.cwd();
 
   if (targetId) {
     const entry = Object.entries(functionMap).find(

@@ -1,5 +1,6 @@
 import fs from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { Config } from '../shared/types/config.js';
 import type { ValidatedFunction } from './validate_functions.js';
 
@@ -10,6 +11,20 @@ type StringTransformer = (text: string) => string;
 
 export const EMPTY_FUNCTIONS_ERROR_MESSAGE =
   'Cannot generate index file: no functions found. This should not be called with an empty function list.';
+
+function findOwnPackageRoot(): string {
+  let dir = dirname(fileURLToPath(import.meta.url));
+  while (dir !== dirname(dir)) {
+    if (fs.existsSync(join(dir, 'package.json'))) return dir;
+    dir = dirname(dir);
+  }
+  throw new Error('Could not locate firebase-functions-smart-export package root');
+}
+
+function readRuntimeBundle(): string {
+  const bundlePath = join(findOwnPackageRoot(), 'runtime.bundle.js');
+  return fs.readFileSync(bundlePath, 'utf8');
+}
 
 function getQuoteWrapperFor(config: Config): StringTransformer {
   const quoteCharacter = config.useSingleQuotes ? `'` : `"`;
@@ -26,10 +41,9 @@ function writeFunctionMap(functions: ValidatedFunction[], outDir: string, config
 }
 
 function writeImportsAndSetup(functions: ValidatedFunction[], outDir: string, config: Config): string {
-  const quote = getQuoteWrapperFor(config);
   return [
     '// GENERATED CODE - DO NOT MODIFY BY HAND',
-    `import { createExportMap } from ${quote('firebase-functions-smart-export')};`,
+    readRuntimeBundle().trimEnd(),
     '',
     writeFunctionMap(functions, outDir, config),
     '',
