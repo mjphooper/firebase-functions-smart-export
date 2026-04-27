@@ -1,5 +1,5 @@
 # Ignore built files
-/cli/
+/lib/
 /runtime.bundle.js
 
 # Ignore dependency files

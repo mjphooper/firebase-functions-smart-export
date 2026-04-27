@@ -3,8 +3,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noEmit": false,
-    "outDir": "",
-    "rootDir": "./src"
+    "outDir": "lib",
+    "rootDir": "./src/cli"
   },
   "include": [
     "src/cli"

@@ -1,4 +1,4 @@
 #!/usr/bin/env node
-import { main } from '../cli/cli.js';
+import { main } from '../lib/cli.js';
 
 main();
