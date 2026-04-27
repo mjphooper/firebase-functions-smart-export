@@ -63,7 +63,7 @@ export async function main() {
 
     reporter.filesFound(files);
 
-    const { topLevelKeys, functions } = validateFunctions(files, config);
+    const { functions } = validateFunctions(files, config);
 
     reporter.functionsValidated(functions);
 
@@ -72,7 +72,7 @@ export async function main() {
       process.exit(0);
     }
 
-    await generateIndexFile(absSourcePath, topLevelKeys, config);
+    await generateIndexFile(absSourcePath, functions, config);
 
     reporter.success(functionCount, startTime);
     process.exit(0);
