@@ -1,3 +1,4 @@
+// Build config for the CLI/shared output (tsc); src/runtime is bundled separately by esbuild.
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {

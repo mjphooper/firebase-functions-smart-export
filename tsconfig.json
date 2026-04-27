@@ -1,3 +1,4 @@
+// Editor + test config: type-checks all source and tests, emits nothing.
 {
   "compilerOptions": {
     "target": "esnext",
