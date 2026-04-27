@@ -13,7 +13,6 @@ const functionMap = {
 
 function makeDeps(targetId: string | null) {
   return {
-    getAbsProjectRootPath: () => '',
     getInstanceTargetId: sinon.stub().returns(targetId),
     importCloudFunction: sinon.stub().resolves(fakeCloudFunction),
     buildExportMap,

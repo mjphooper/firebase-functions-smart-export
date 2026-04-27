@@ -37,11 +37,12 @@ describe('generateIndexFile()', () => {
     );
   });
 
-  it('writes imports and functionMap initialization', async () => {
+  it('inlines the runtime and writes functionMap initialization', async () => {
     await generateIndexFile(testDir, [makeFunction('foo', 'foo.function.js')], doubleQuoteConfig);
 
     const content = readGeneratedFile();
-    expect(content).to.contain('import { createExportMap } from "firebase-functions-smart-export";');
+    expect(content).to.match(/function createExportMap\b/);
+    expect(content).to.not.match(/from ["']firebase-functions-smart-export["']/);
     expect(content).to.contain('const functionMap = {');
     expect(content).to.contain('const exportMap = await createExportMap(functionMap);');
   });
@@ -81,11 +82,15 @@ describe('generateIndexFile()', () => {
     expect(content).to.contain('export const baz = exportMap.baz;');
   });
 
-  it('quote style reflects config', async () => {
+  it('quote style reflects config in the function map', async () => {
     const config: Config = { useSingleQuotes: true };
-    await generateIndexFile(testDir, [makeFunction('foo', 'foo.function.js')], config);
+    await generateIndexFile(
+      testDir,
+      [makeFunction('auth.onCreate', 'auth/onCreate.function.js')],
+      config,
+    );
 
     const content = readGeneratedFile();
-    expect(content).to.contain(`import { createExportMap } from 'firebase-functions-smart-export';`);
+    expect(content).to.contain(`'auth.onCreate': 'lib/auth/onCreate.function.js'`);
   });
 });
