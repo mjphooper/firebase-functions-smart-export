@@ -13,7 +13,7 @@ function readGeneratedFile() {
   return fs.readFileSync(resolve(testDir, GENERATED_INDEX_FILE_NAME), 'utf8');
 }
 
-function makeFunction(exportKey: string, filePath: string): ParsedFunction {
+function makeParsedFunction(exportKey: string, filePath: string): ParsedFunction {
   return { exportKey, filePath };
 }
 
@@ -35,7 +35,7 @@ describe('generateIndexFile()', () => {
   });
 
   it('inlines the runtime and writes functionMap initialization', async () => {
-    await generateIndexFile(testDir, [makeFunction('foo', 'foo.function.js')], doubleQuoteConfig);
+    await generateIndexFile(testDir, [makeParsedFunction('foo', 'foo.function.js')], doubleQuoteConfig);
 
     const content = readGeneratedFile();
     expect(content).to.match(/function createExportMap\b/);
@@ -47,7 +47,7 @@ describe('generateIndexFile()', () => {
   it('writes functionMap entries with project-root-relative paths', async () => {
     await generateIndexFile(
       testDir,
-      [makeFunction('auth.onCreate', 'auth/onCreate.function.js')],
+      [makeParsedFunction('auth.onCreate', 'auth/onCreate.function.js')],
       doubleQuoteConfig,
     );
 
@@ -59,7 +59,7 @@ describe('generateIndexFile()', () => {
     const config: Config = { outDir: 'build' };
     await generateIndexFile(
       testDir,
-      [makeFunction('auth.onCreate', 'auth/onCreate.function.js')],
+      [makeParsedFunction('auth.onCreate', 'auth/onCreate.function.js')],
       config,
     );
 
@@ -70,7 +70,7 @@ describe('generateIndexFile()', () => {
   it('writes named exports for each top-level key', async () => {
     await generateIndexFile(
       testDir,
-      [makeFunction('foo.bar', 'foo/bar.function.js'), makeFunction('baz.qux', 'baz/qux.function.js')],
+      [makeParsedFunction('foo.bar', 'foo/bar.function.js'), makeParsedFunction('baz.qux', 'baz/qux.function.js')],
       doubleQuoteConfig,
     );
 
@@ -83,7 +83,7 @@ describe('generateIndexFile()', () => {
     const config: Config = { useSingleQuotes: true };
     await generateIndexFile(
       testDir,
-      [makeFunction('auth.onCreate', 'auth/onCreate.function.js')],
+      [makeParsedFunction('auth.onCreate', 'auth/onCreate.function.js')],
       config,
     );
 
