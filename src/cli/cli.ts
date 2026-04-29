@@ -1,4 +1,5 @@
 import { argv } from 'process';
+import { DEFAULT_MATCH_EXTENSION, DEFAULT_OUT_DIR, DEFAULT_SOURCE_DIR } from './config.js';
 import { getConfig } from './config_loader.js';
 import { findFunctionFiles } from './find_function_files.js';
 import { getAbsSourceDirPath } from './paths.js';
@@ -48,9 +49,9 @@ export async function main() {
     styledConsoleOutput.info(`Resolved source code path to: ${absSourcePath}`);
 
     if (verbose) {
-      const sourceDir = config.sourceDir ?? 'src';
-      const outDir = config.outDir ?? 'lib';
-      const matchExtension = config.matchExtension ?? 'function';
+      const sourceDir = config.sourceDir ?? DEFAULT_SOURCE_DIR;
+      const outDir = config.outDir ?? DEFAULT_OUT_DIR;
+      const matchExtension = config.matchExtension ?? DEFAULT_MATCH_EXTENSION;
       styledConsoleOutput.info(`Searching for .${matchExtension} files in ${sourceDir}/, outputting to ${outDir}/`);
     }
 

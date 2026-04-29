@@ -1,4 +1,6 @@
-/* istanbul ignore file */
+export const DEFAULT_SOURCE_DIR = 'src';
+export const DEFAULT_OUT_DIR = 'lib';
+export const DEFAULT_MATCH_EXTENSION = 'function';
 
 /**
  * Configuration options for resolving and exporting Firebase Functions.

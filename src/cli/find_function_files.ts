@@ -1,6 +1,5 @@
 import glob from 'fast-glob';
-
-export const DEFAULT_MATCH_EXTENSION = 'function';
+import { DEFAULT_MATCH_EXTENSION } from './config.js';
 
 
 /**

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { Config } from './config.js';
+import { DEFAULT_OUT_DIR, type Config } from './config.js';
 import type { ValidatedFunction } from './validate_functions.js';
 
 /** The name of the generated index file. */
@@ -77,7 +77,7 @@ export async function generateIndexFile(
     throw new Error(EMPTY_FUNCTIONS_ERROR_MESSAGE);
   }
 
-  const outDir = config.outDir ?? 'lib';
+  const outDir = config.outDir ?? DEFAULT_OUT_DIR;
 
   const contents = [
     writeImportsAndSetup(functions, outDir, config),
