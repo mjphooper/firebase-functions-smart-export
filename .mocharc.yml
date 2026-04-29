@@ -1,3 +1,4 @@
 loader: ts-node/esm
+require: test/setup.ts
 spec: "test/**/*.test.ts"
 timeout: 5000

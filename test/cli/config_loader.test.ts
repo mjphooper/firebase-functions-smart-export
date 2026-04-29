@@ -1,12 +1,9 @@
-import { expect, use } from 'chai';
-import chaiAsPromised from 'chai-as-promised';
+import { expect } from 'chai';
 import fs from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { getConfig } from '../../src/cli/config_loader.js';
 import { Config } from '../../src/cli/config.js';
-
-use(chaiAsPromised);
 
 describe('config_loader', () => {
   const __dirname = dirname(fileURLToPath(import.meta.url));
