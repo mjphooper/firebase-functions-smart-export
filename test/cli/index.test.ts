@@ -1,5 +1,4 @@
 import { expect } from 'chai';
-import { randomUUID } from 'crypto';
 import fs from 'fs';
 import { dirname, join, resolve } from 'path';
 import sinon from 'sinon';
@@ -7,11 +6,7 @@ import type { Config } from '../../src/cli/config.js';
 import { GENERATED_INDEX_FILE_NAME } from '../../src/cli/generate_index_file.js';
 import { main } from '../../src/cli/index.js';
 import { styledConsoleOutput } from '../../src/cli/styled_console_log.js';
-
-// Each test gets a fresh UUID-named subdirectory under here to act as an
-// isolated project root, so file-system writes can't bleed between tests
-// which fail to clean up properly.
-const SANDBOXES_ROOT = resolve(import.meta.dirname, 'sandboxes');
+import { useSandbox } from '../helpers/sandbox.js';
 
 /**
  * Dynamically imports the generated index file and returns its module namespace.
@@ -31,6 +26,7 @@ async function importGeneratedIndex(projectRoot: string, sourceDir = 'src'): Pro
 }
 
 describe('cli main()', () => {
+  const sandbox = useSandbox();
   let projectRoot: string;
 
   /** Creates a function file at `<projectRoot>/<sourceDir>/<relPath>` with optional contents. */
@@ -61,22 +57,13 @@ describe('cli main()', () => {
     return fs.existsSync(indexPath(sourceDir));
   }
 
-  before(() => {
-    fs.mkdirSync(SANDBOXES_ROOT, { recursive: true });
-  });
-
-  after(() => {
-    fs.rmSync(SANDBOXES_ROOT, { recursive: true, force: true });
-  });
-
   beforeEach(() => {
-    projectRoot = join(SANDBOXES_ROOT, randomUUID());
+    projectRoot = sandbox.path();
     fs.mkdirSync(join(projectRoot, 'src'), { recursive: true });
   });
 
   afterEach(() => {
     sinon.restore();
-    fs.rmSync(projectRoot, { recursive: true, force: true });
   });
 
   it('returns 1 and logs an error when the source directory cannot be resolved', async () => {
