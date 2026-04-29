@@ -1,6 +1,7 @@
 /* istanbul ignore file */
 import fs from 'fs';
 import { join, resolve } from 'path';
+import { DEFAULT_OUT_DIR, DEFAULT_SOURCE_DIR } from './config.js';
 
 /** Returns the absolute path to the root of the user's project. */
 export function getAbsProjectRootPath() {
@@ -29,21 +30,19 @@ export function getAbsSourceDirPath(sourceDir?: string): string {
     return configuredDir;
   }
 
-  // Auto-detect: if a 'src' directory exists, select this as the source path.
-  const srcDir = join(root, 'src');
+  // Auto-detect: prefer src/ (TS projects), fall back to lib/ (JS projects).
+  const srcDir = join(root, DEFAULT_SOURCE_DIR);
   if (fs.existsSync(srcDir)) {
     return srcDir;
   }
 
-  // If a 'lib' directory exists, select this.
-  const libDir = join(root, 'lib');
+  const libDir = join(root, DEFAULT_OUT_DIR);
   if (fs.existsSync(libDir)) {
     return libDir;
   }
 
-  // If neither exist, throw an error.
   throw new Error(
-    `Could not find source directory. Expected "src/" or "lib/" to exist in ${root}. ` +
+    `Could not find source directory. Expected "${DEFAULT_SOURCE_DIR}/" or "${DEFAULT_OUT_DIR}/" to exist in ${root}. ` +
     `If your project uses a different directory, configure "sourceDir" in ffse.config.js.`
   );
 }

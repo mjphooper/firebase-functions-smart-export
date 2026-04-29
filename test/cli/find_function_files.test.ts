@@ -3,7 +3,8 @@ import * as fs from 'fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as path from 'path';
-import { DEFAULT_MATCH_EXTENSION, findFunctionFiles } from '../../src/cli/find_function_files.js';
+import { DEFAULT_MATCH_EXTENSION } from '../../src/cli/config.js';
+import { findFunctionFiles } from '../../src/cli/find_function_files.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
