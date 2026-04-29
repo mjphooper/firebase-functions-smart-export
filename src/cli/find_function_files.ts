@@ -2,42 +2,38 @@ import glob from 'fast-glob';
 
 export const DEFAULT_MATCH_EXTENSION = 'function';
 
-/**
- * Replaces the extension of any file ending in `.ts` with `.js`.
- */
-function normalizePathsToJS(...paths: string[]): string[] {
-  return paths.map((path) => {
-    if (path.endsWith('.ts')) return path.slice(0, -3) + '.js';
-    return path;
-  });
-}
-
-export interface FindFunctionFilesResult {
-  files: string[];
-  hasMixedFileTypes: boolean;
-}
 
 /**
  * Recursively finds all files matching the extension pattern in the given directory.
  *
- * Returns a list of file paths transformed to point to `.js` files, along with
- * whether both `.ts` and `.js` function files were found.
+ * Paths are rewritten to `.js` because the generated index runs against the
+ * compiled output, where all sources resolve to `.js` regardless of authoring.
+ *
+ * @param sourceDir - Directory to search, relative or absolute.
+ * @param matchExtension - Custom extension (excluding `.js`) used to identify
+ *   function files. Defaults to `'function'`, matching files like `foo.function.ts`.
+ * @returns An object containing:
+ *   - `files`: deduplicated paths with `.js` extensions, relative to `sourceDir`.
+ *   - `hasMixedFileTypes`: `true` if both `.ts` and `.js` function files coexist in source.
  */
 export function findFunctionFiles(
   sourceDir: string,
   matchExtension: string = DEFAULT_MATCH_EXTENSION,
-): FindFunctionFilesResult {
+): { files: string[]; hasMixedFileTypes: boolean } {
   const relativePaths = glob.sync(`**/*.${matchExtension}.[jt]s`, {
     cwd: sourceDir,
     onlyFiles: true,
   });
 
-  const hasTsFiles = relativePaths.some(p => p.endsWith('.ts'));
-  const hasJsFiles = relativePaths.some(p => p.endsWith('.js'));
+  const hasTsFiles = relativePaths.some(path => path.endsWith('.ts'));
+  const hasJsFiles = relativePaths.some(path => path.endsWith('.js'));
 
-  const normalizedPaths = normalizePathsToJS(...relativePaths);
+  const jsPaths = relativePaths.map(
+    path => path.endsWith('.ts') ? path.slice(0, -3) + '.js' : path
+  );
+
   return {
-    files: [...new Set(normalizedPaths)],
+    files: [...new Set(jsPaths)],
     hasMixedFileTypes: hasTsFiles && hasJsFiles,
   };
 }
