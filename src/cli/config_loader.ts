@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import { join } from 'path';
-import { getAbsProjectRootPath } from './paths.js';
 import type { Config } from './config.js';
 
 /** The name of the user created configuration file. */
@@ -46,11 +45,10 @@ export function moduleExists(modulePath: string) {
  * and returns its default export. If the file does not exist, returns an empty object.
  * Throws if the file exists but does not export an object.
  *
- * @param absRootPath - Optional absolute path to the project root. Defaults to `process.cwd()`.
+ * @param absRootPath - Absolute path to the project root.
  * @returns A promise resolving to the configuration object.
  */
-export async function getConfig(absRootPath?: string): Promise<Config> {
-  const root = absRootPath ?? getAbsProjectRootPath();
-  const path = join(root, CONFIG_FILE_NAME);
+export async function getConfig(absRootPath: string): Promise<Config> {
+  const path = join(absRootPath, CONFIG_FILE_NAME);
   return moduleExists(path) ? await importConfig(path) : {};
 }
