@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { main } from '../lib/cli.js';
+import { main } from '../lib/index.js';
 
 const program = new Command()
   .name('ffse')
