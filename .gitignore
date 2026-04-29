@@ -1,6 +1,7 @@
 # Ignore built files
 /lib/
 /runtime.bundle.js
+/coverage/
 
 # Ignore dependency files
 node_modules/
