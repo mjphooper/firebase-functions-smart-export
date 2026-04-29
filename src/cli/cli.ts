@@ -1,53 +1,28 @@
-import { argv } from 'process';
 import { DEFAULT_MATCH_EXTENSION, DEFAULT_OUT_DIR, DEFAULT_SOURCE_DIR } from './config.js';
 import { getConfig } from './config_loader.js';
 import { findFunctionFiles } from './find_function_files.js';
+import { generateIndexFile } from './generate_index_file.js';
+import { findDuplicateFunctions, findOversizedFunctions, FUNCTION_NAME_CHARACTER_LIMIT, parseFunctionFile } from './parse_function_files.js';
 import { getAbsSourceDirPath } from './paths.js';
 import { styledConsoleOutput } from './styled_console_log.js';
-import { generateIndexFile } from './generate_index_file.js';
-import { findDuplicateFunctions, findOversizedFunctions, parseFunctionFile } from './parse_function_files.js';
 
-const FUNCTION_NAME_CHARACTER_LIMIT = 62;
-
-
-const HELP_MESSAGE = `
-Usage:
-  npx ffse [options]
-
-Options:
-  \x1b[36m--dry-run\x1b[0m     Print output without writing files
-  \x1b[36m--verbose\x1b[0m     Show extra logs
-  \x1b[36m--help\x1b[0m        Show this message
-`;
-
-function parseCliFlags(argv: string[]) {
-  return {
-    dryRun: argv.includes('--dry-run'),
-    verbose: argv.includes('--verbose'),
-    help: argv.includes('--help'),
-  };
-}
-
-export async function main() {
-  const { dryRun, verbose, help } = parseCliFlags(argv);
-
+export async function main({
+  dryRun = false,
+  verbose = false,
+  cwd = process.cwd(),
+}: { dryRun?: boolean; verbose?: boolean; cwd?: string } = {}): Promise<number> {
   try {
-    if (help) {
-      console.log(HELP_MESSAGE);
-      process.exit(0);
-    }
-
     styledConsoleOutput.info('⚡️ Running Firebase Functions Smart Export (FFSE)...', { skipPrefix: true });
 
     const startTime = performance.now();
-    const config = await getConfig();
+    const config = await getConfig(cwd);
 
     if (verbose) {
       const hasCustomConfig = Object.keys(config).length > 0;
       if (hasCustomConfig) styledConsoleOutput.info('⚙️ Custom config loaded from ffse.config.js');
     }
 
-    const absSourcePath = getAbsSourceDirPath(config.sourceDir);
+    const absSourcePath = getAbsSourceDirPath(cwd, config.sourceDir);
     styledConsoleOutput.info(`Resolved source code path to: ${absSourcePath}`);
 
     if (verbose) {
@@ -69,7 +44,7 @@ export async function main() {
 
     if (functionCount === 0) {
       styledConsoleOutput.warn('No functions found to export. Skipping file generation.');
-      process.exit(0);
+      return 0;
     }
 
     if (verbose) {
@@ -105,16 +80,16 @@ export async function main() {
 
     if (dryRun) {
       styledConsoleOutput.success(`Dry run complete! ${functionCount} function(s) found to export.`);
-      process.exit(0);
+      return 0;
     }
 
     await generateIndexFile(absSourcePath, functions, config);
 
     const timing = verbose ? ` in ${Math.round(performance.now() - startTime)}ms` : '';
     styledConsoleOutput.success(`[ffse] ✅ Success! Exported ${functionCount} function(s)${timing}`);
-    process.exit(0);
+    return 0;
   } catch (error) {
     styledConsoleOutput.error(`${error instanceof Error ? error.stack : error}`);
-    process.exit(1);
+    return 1;
   }
 }

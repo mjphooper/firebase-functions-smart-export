@@ -8,6 +8,9 @@ export interface ParsedFunction {
   filePath: string;
 }
 
+/** Maximum length of a Firebase Cloud Function name. */
+export const FUNCTION_NAME_CHARACTER_LIMIT = 62;
+
 /**
  * Parses a single function file path into a `ParsedFunction`.
  *

@@ -3,11 +3,6 @@ import fs from 'fs';
 import { join, resolve } from 'path';
 import { DEFAULT_OUT_DIR, DEFAULT_SOURCE_DIR } from './config.js';
 
-/** Returns the absolute path to the root of the user's project. */
-export function getAbsProjectRootPath() {
-  return resolve(process.cwd());
-}
-
 /**
  * The absolute path to the project's source code directory.
  *
@@ -15,9 +10,13 @@ export function getAbsProjectRootPath() {
  * to `lib/`, and for TypeScript projects the path to `src/`.
  *
  * @param sourceDir - Optional explicit source directory from config. If provided, skips auto-detection.
+ * @param cwd - The working directory to resolve from.
  */
-export function getAbsSourceDirPath(sourceDir?: string): string {
-  const root = getAbsProjectRootPath();
+export function getAbsSourceDirPath(
+  cwd: string,
+  sourceDir: string | undefined,
+): string {
+  const root = resolve(cwd);
 
   // If sourceDir is explicitly configured, use it directly.
   if (sourceDir) {
