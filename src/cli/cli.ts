@@ -5,7 +5,6 @@ import { getAbsSourceDirPath } from './paths.js';
 import { styledConsoleOutput } from './styled_console_log.js';
 import { generateIndexFile } from './generate_index_file.js';
 import { validateFunctions } from './validate_functions.js';
-import { Reporter } from './reporter.js';
 
 
 const HELP_MESSAGE = `
@@ -28,7 +27,6 @@ function parseCliFlags(argv: string[]) {
 
 export async function main() {
   const { dryRun, verbose, help } = parseCliFlags(argv);
-  const reporter = new Reporter(verbose);
 
   try {
     if (help) {
@@ -36,15 +34,25 @@ export async function main() {
       process.exit(0);
     }
 
-    reporter.started();
+    styledConsoleOutput.info('⚡️ Running Firebase Functions Smart Export (FFSE)...', { skipPrefix: true });
 
     const startTime = performance.now();
     const config = await getConfig();
-    const absSourcePath = getAbsSourceDirPath(config.sourceDir);
 
-    reporter.customConfigLoaded(config);
-    reporter.sourcePathResolved(absSourcePath);
-    reporter.searchStarted(config);
+    if (verbose) {
+      const hasCustomConfig = Object.keys(config).length > 0;
+      if (hasCustomConfig) styledConsoleOutput.info('⚙️ Custom config loaded from ffse.config.js');
+    }
+
+    const absSourcePath = getAbsSourceDirPath(config.sourceDir);
+    styledConsoleOutput.info(`Resolved source code path to: ${absSourcePath}`);
+
+    if (verbose) {
+      const sourceDir = config.sourceDir ?? 'src';
+      const outDir = config.outDir ?? 'lib';
+      const matchExtension = config.matchExtension ?? 'function';
+      styledConsoleOutput.info(`Searching for .${matchExtension} files in ${sourceDir}/, outputting to ${outDir}/`);
+    }
 
     const { files, hasMixedFileTypes } = findFunctionFiles(absSourcePath, config.matchExtension);
 
@@ -57,27 +65,33 @@ export async function main() {
     const functionCount = files.length;
 
     if (functionCount === 0) {
-      reporter.noFunctionsFound();
+      styledConsoleOutput.warn('No functions found to export. Skipping file generation.');
       process.exit(0);
     }
 
-    reporter.filesFound(files);
+    if (verbose) {
+      styledConsoleOutput.info(`${files.length} function(s) found.`);
+      for (const file of files) styledConsoleOutput.info(file);
+    }
 
     const { functions } = validateFunctions(files, config);
 
-    reporter.functionsValidated(functions);
+    if (verbose) {
+      for (const fn of functions) styledConsoleOutput.info(`${fn.functionId} (from "${fn.filePath}")`);
+    }
 
     if (dryRun) {
-      reporter.dryRunComplete(functionCount);
+      styledConsoleOutput.success(`Dry run complete! ${functionCount} function(s) found to export.`);
       process.exit(0);
     }
 
     await generateIndexFile(absSourcePath, functions, config);
 
-    reporter.success(functionCount, startTime);
+    const timing = verbose ? ` in ${Math.round(performance.now() - startTime)}ms` : '';
+    styledConsoleOutput.success(`[ffse] ✅ Success! Exported ${functionCount} function(s)${timing}`);
     process.exit(0);
   } catch (error) {
-    reporter.error(error);
+    styledConsoleOutput.error(`${error instanceof Error ? error.stack : error}`);
     process.exit(1);
   }
 }
