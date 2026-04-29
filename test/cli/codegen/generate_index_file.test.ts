@@ -4,7 +4,7 @@ import fs from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { EMPTY_FUNCTIONS_ERROR_MESSAGE, GENERATED_INDEX_FILE_NAME, generateIndexFile } from '../../../src/cli/generate_index_file.js';
-import type { ParsedFunction } from '../../../src/cli/parse_functions.js';
+import type { ParsedFunction } from '../../../src/cli/parse_function_files.js';
 import { Config } from '../../../src/cli/config.js';
 
 use(chaiAsPromised);

@@ -9,48 +9,35 @@ export interface ParsedFunction {
 }
 
 /**
- * Converts a relative file path into a camelCase export key.
+ * Parses a single function file path into a `ParsedFunction`.
  *
  * The file name must match the pattern `*.<matchExtension>.js` (e.g.,
- * `myFunc.function.js`), where the last two extensions are stripped to
- * determine the function name (`myFunc`). The folder segments and file name
- * are transformed into dot-separated camelCase, after applying any group
- * filtering or remapping defined in the config.
+ * `myFunc.function.js`); the last two extensions are stripped to determine
+ * the function name. The folder segments and file name are transformed into
+ * a dot-separated camelCase export key, after applying any group filtering
+ * or remapping defined in the config.
  *
- * @throws If the file name does not match the expected `*.<matchExtension>.js` pattern.
+ * Performs no validation beyond filename shape — callers are responsible for
+ * enforcing length limits, uniqueness, etc.
+ *
+ * @throws If the file name does not match the expected pattern.
  */
-export function parseExportKeyFromPath(filePath: string, config: Config): string {
+export function parseFunctionFile(
+  filePath: string,
+  config: Config,
+): ParsedFunction {
   const splitPath = slash(filePath).split('/');
-
   const fileName = splitPath.pop();
 
   const match = fileName.match(/^(.*)\.[^.]+\.js$/);
   if (!match) {
     throw new Error(`Expected file name to match pattern "*.<matchExtension>.js", but got "${fileName}"`);
   }
-  const functionName = match[1];
 
   const groups = transformGroups([...splitPath], config);
+  const exportKey = [...groups, match[1]].map(value => camelCase(value)).join('.');
 
-  return [...groups, functionName]
-    .map(value => camelCase(value))
-    .join('.');
-}
-
-/**
- * Maps each function file path to its parsed export key.
- *
- * Performs no validation — callers are responsible for enforcing length limits,
- * uniqueness, etc.
- */
-export function parseFunctions(
-  files: string[],
-  config: Config,
-): ParsedFunction[] {
-  return files.map(filePath => ({
-    exportKey: parseExportKeyFromPath(filePath, config),
-    filePath,
-  }));
+  return { exportKey, filePath };
 }
 
 /**
