@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEFAULT_OUT_DIR, type Config } from './config.js';
-import type { ValidatedFunction } from './validate_functions.js';
+import type { ParsedFunction } from './parse_functions.js';
 
 /** The name of the generated index file. */
 export const GENERATED_INDEX_FILE_NAME = 'index.gen.js';
@@ -31,7 +31,7 @@ function getQuoteWrapperFor(config: Config): StringTransformer {
   return (text: string) => `${quoteCharacter}${text}${quoteCharacter}`;
 }
 
-function writeFunctionMap(functions: ValidatedFunction[], outDir: string, config: Config): string {
+function writeFunctionMap(functions: ParsedFunction[], outDir: string, config: Config): string {
   const quote = getQuoteWrapperFor(config);
   const entries = functions.map(({ exportKey, filePath }) => {
     const path = join(outDir, filePath).replace(/\\/g, '/');
@@ -40,7 +40,7 @@ function writeFunctionMap(functions: ValidatedFunction[], outDir: string, config
   return `const functionMap = {\n${entries.join(',\n')},\n};`;
 }
 
-function writeImportsAndSetup(functions: ValidatedFunction[], outDir: string, config: Config): string {
+function writeImportsAndSetup(functions: ParsedFunction[], outDir: string, config: Config): string {
   return [
     '// GENERATED CODE - DO NOT MODIFY BY HAND',
     readRuntimeBundle().trimEnd(),
@@ -52,7 +52,7 @@ function writeImportsAndSetup(functions: ValidatedFunction[], outDir: string, co
   ].join('\n');
 }
 
-function writeExports(functions: ValidatedFunction[]): string {
+function writeExports(functions: ParsedFunction[]): string {
   const topLevelKeys = [...new Set(functions.map(({ exportKey }) => exportKey.split('.')[0]))];
   return topLevelKeys.map((key) => `export const ${key} = exportMap.${key};`).join('\n');
 }
@@ -70,7 +70,7 @@ function writeExports(functions: ValidatedFunction[]): string {
  */
 export async function generateIndexFile(
   preferredSourceDir: string,
-  functions: ValidatedFunction[],
+  functions: ParsedFunction[],
   config: Config,
 ): Promise<void> {
   if (functions.length === 0) {

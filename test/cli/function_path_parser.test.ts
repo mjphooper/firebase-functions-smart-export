@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { parseExportKeyFromPath, parseFunctionIdFromPath } from "../../src/cli/function_path_parser.js";
+import { parseExportKeyFromPath } from "../../src/cli/function_path_parser.js";
 import { Config } from "../../src/cli/config.js";
 
 describe('parseExportKeyFromPath()', () => {
@@ -48,14 +48,6 @@ describe('parseExportKeyFromPath()', () => {
   });
 });
 
-describe('parseFunctionIdFromPath()', () => {
-  it('returns a lowercase function ID', () => {
-    const path = 'primaryGroup/subGroup/myFunction.function.js';
-    const result = parseFunctionIdFromPath(path, {});
-    expect(result).to.equal('primarygroup.subgroup.myfunction');
-  });
-});
-
 describe('Windows path handling', () => {
   const emptyConfig: Config = {};
 
@@ -69,11 +61,5 @@ describe('Windows path handling', () => {
     const path = 'group/subgroup\\func.function.js';
     const result = parseExportKeyFromPath(path, emptyConfig);
     expect(result).to.equal('group.subgroup.func');
-  });
-
-  it('handles Windows paths with parseFunctionIdFromPath', () => {
-    const path = 'primaryGroup\\subGroup\\myFunction.function.js';
-    const result = parseFunctionIdFromPath(path, emptyConfig);
-    expect(result).to.equal('primarygroup.subgroup.myfunction');
   });
 });

@@ -37,15 +37,3 @@ export function parseExportKeyFromPath(
     .map(value => camelCase(value))
     .join('.');
 }
-
-/**
- * Converts a relative file path to a lowercase function ID.
- *
- * Internally calls `parseExportKeyFromPath`, then lowercases the result.
- */
-export function parseFunctionIdFromPath(
-  relPath: string,
-  config: Config,
-): string {
-  return parseExportKeyFromPath(relPath, config).toLowerCase();
-}
