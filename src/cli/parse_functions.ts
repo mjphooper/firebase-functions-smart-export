@@ -1,9 +1,40 @@
+import { camelCase } from 'change-case';
+import slash from 'slash';
 import type { Config } from './config.js';
-import { parseExportKeyFromPath } from './function_path_parser.js';
+import { transformGroups } from './transform_groups.js';
 
 export interface ParsedFunction {
   exportKey: string;
   filePath: string;
+}
+
+/**
+ * Converts a relative file path into a camelCase export key.
+ *
+ * The file name must match the pattern `*.<matchExtension>.js` (e.g.,
+ * `myFunc.function.js`), where the last two extensions are stripped to
+ * determine the function name (`myFunc`). The folder segments and file name
+ * are transformed into dot-separated camelCase, after applying any group
+ * filtering or remapping defined in the config.
+ *
+ * @throws If the file name does not match the expected `*.<matchExtension>.js` pattern.
+ */
+export function parseExportKeyFromPath(filePath: string, config: Config): string {
+  const splitPath = slash(filePath).split('/');
+
+  const fileName = splitPath.pop();
+
+  const match = fileName.match(/^(.*)\.[^.]+\.js$/);
+  if (!match) {
+    throw new Error(`Expected file name to match pattern "*.<matchExtension>.js", but got "${fileName}"`);
+  }
+  const functionName = match[1];
+
+  const groups = transformGroups([...splitPath], config);
+
+  return [...groups, functionName]
+    .map(value => camelCase(value))
+    .join('.');
 }
 
 /**
