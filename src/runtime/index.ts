@@ -1,8 +1,7 @@
 import { join } from 'path';
-import { buildExportMap } from "./build_export_map.js";
+import { buildExportMap, type ExportMap } from "./build_export_map.js";
 import { getInstanceTargetId } from "./get_instance_target_id.js";
 import { importCloudFunction } from "./import_cloud_function.js";
-import type { ExportMap } from "./types/export_map.js";
 
 export async function createExportMap(
   functionMap: Record<string, string>,
