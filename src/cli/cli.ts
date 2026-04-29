@@ -5,7 +5,7 @@ import { findFunctionFiles } from './find_function_files.js';
 import { getAbsSourceDirPath } from './paths.js';
 import { styledConsoleOutput } from './styled_console_log.js';
 import { generateIndexFile } from './generate_index_file.js';
-import { findDuplicateFunctions, findOversizedFunctions, parseFunctions } from './parse_functions.js';
+import { findDuplicateFunctions, findOversizedFunctions, parseFunctionFile } from './parse_function_files.js';
 
 const FUNCTION_NAME_CHARACTER_LIMIT = 62;
 
@@ -77,7 +77,7 @@ export async function main() {
       for (const file of files) styledConsoleOutput.info(file);
     }
 
-    const functions = parseFunctions(files, config);
+    const functions = files.map(file => parseFunctionFile(file, config));
 
     const oversized = findOversizedFunctions(functions, FUNCTION_NAME_CHARACTER_LIMIT);
     if (oversized.length > 0) {

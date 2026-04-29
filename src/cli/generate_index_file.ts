@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEFAULT_OUT_DIR, type Config } from './config.js';
-import type { ParsedFunction } from './parse_functions.js';
+import type { ParsedFunction } from './parse_function_files.js';
 
 /** The name of the generated index file. */
 export const GENERATED_INDEX_FILE_NAME = 'index.gen.js';

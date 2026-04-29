@@ -1,88 +1,22 @@
 import { expect } from 'chai';
-import { findDuplicateFunctions, findOversizedFunctions, parseExportKeyFromPath, parseFunctions, type ParsedFunction } from '../../src/cli/parse_functions.js';
+import { findDuplicateFunctions, findOversizedFunctions, parseFunctionFile, type ParsedFunction } from '../../src/cli/parse_function_files.js';
 import { Config } from '../../src/cli/config.js';
 
 const fn = (exportKey: string, filePath = `${exportKey}.function.js`): ParsedFunction => ({ exportKey, filePath });
 
-describe('parseExportKeyFromPath()', () => {
+describe('parseFunctionFile()', () => {
   const emptyConfig: Config = {};
 
-  it('transforms a lowercase path to an export key', () => {
-    const result = parseExportKeyFromPath('a/b/c.function.js', emptyConfig);
-    expect(result).to.equal('a.b.c');
-  });
-
-  for (const [label, path] of [
-    ['camelCase', 'events/fsTriggers/onEvent.function.js'],
-    ['kebab-case', 'events/fs-triggers/on-event.function.js'],
-    ['snake_case', 'events/fs_triggers/on_event.function.js'],
-    ['a mix of cases', 'events/fsTriggers/on_event.function.js'],
-  ] as const) {
-    it(`transforms ${label} path to a camelCase export key`, () => {
-      const result = parseExportKeyFromPath(path, emptyConfig);
-      expect(result).to.equal('events.fsTriggers.onEvent');
-    });
-  }
-
-  it('applies group transforms from config', () => {
-    const path = 'redundant/path/to/file/yawn/someFunction.function.js';
-    const config: Config = { ignoreGroups: ['redundant', 'yawn'] };
-    const result = parseExportKeyFromPath(path, config);
-    expect(result).to.equal('path.to.file.someFunction');
-  });
-
-  describe('when file extension is wrong', () => {
-    it('throws if file extension is missing', () => {
-      expect(() => parseExportKeyFromPath('foo/bar', emptyConfig)).to.throw();
-    });
-
-    it('throws if the file does not use .js', () => {
-      expect(() => parseExportKeyFromPath('foo/bar.function.ts', emptyConfig)).to.throw();
-    });
-
-    it('throws if the file extension is the wrong format', () => {
-      expect(() => parseExportKeyFromPath('foo/bar.js.function', emptyConfig)).to.throw();
-    });
-  });
-
-  describe('Windows path handling', () => {
-    it('handles Windows-style backslash paths', () => {
-      const result = parseExportKeyFromPath('group\\subgroup\\func.function.js', emptyConfig);
-      expect(result).to.equal('group.subgroup.func');
-    });
-
-    it('handles mixed slash styles', () => {
-      const result = parseExportKeyFromPath('group/subgroup\\func.function.js', emptyConfig);
-      expect(result).to.equal('group.subgroup.func');
-    });
-  });
-});
-
-describe('parseFunctions()', () => {
-  const emptyConfig: Config = {};
-
-  it('returns an empty list when files are empty', () => {
-    const functions = parseFunctions([], emptyConfig);
-
-    expect(functions).to.have.lengthOf(0);
-  });
-
-  it('returns one parsed function per file, in order', () => {
-    const files = ['a/b/c.function.js', 'd/e/f.function.js'];
-
-    const functions = parseFunctions(files, emptyConfig);
-
-    expect(functions).to.have.lengthOf(2);
-    expect(functions[0].filePath).to.equal(files[0]);
-    expect(functions[1].filePath).to.equal(files[1]);
-  });
-
-  it('stores unmodified file path on each parsed function', () => {
+  it('stores the unmodified file path on the parsed function', () => {
     const file = `a/b/c.function.js`;
 
-    const functions = parseFunctions([file], emptyConfig);
+    const result = parseFunctionFile(file, emptyConfig);
 
-    expect(functions[0].filePath).to.equal(file);
+    expect(result.filePath).to.equal(file);
+  });
+
+  it('transforms a lowercase path to an export key', () => {
+    expect(parseFunctionFile('a/b/c.function.js', emptyConfig).exportKey).to.equal('a.b.c');
   });
 
   for (const [label, file] of [
@@ -92,11 +26,39 @@ describe('parseFunctions()', () => {
     ['a mix of cases', 'events/fsTriggers/on_event.function.js'],
   ] as const) {
     it(`derives the correct export key from ${label} file paths`, () => {
-      const functions = parseFunctions([file], emptyConfig);
-
-      expect(functions[0].exportKey).to.equal('events.fsTriggers.onEvent');
+      expect(parseFunctionFile(file, emptyConfig).exportKey).to.equal('events.fsTriggers.onEvent');
     });
   }
+
+  it('applies group transforms from config', () => {
+    const config: Config = { ignoreGroups: ['redundant', 'yawn'] };
+    expect(parseFunctionFile('redundant/path/to/file/yawn/someFunction.function.js', config).exportKey)
+      .to.equal('path.to.file.someFunction');
+  });
+
+  describe('when file extension is wrong', () => {
+    it('throws if file extension is missing', () => {
+      expect(() => parseFunctionFile('foo/bar', emptyConfig)).to.throw();
+    });
+
+    it('throws if the file does not use .js', () => {
+      expect(() => parseFunctionFile('foo/bar.function.ts', emptyConfig)).to.throw();
+    });
+
+    it('throws if the file extension is the wrong format', () => {
+      expect(() => parseFunctionFile('foo/bar.js.function', emptyConfig)).to.throw();
+    });
+  });
+
+  describe('Windows path handling', () => {
+    it('handles Windows-style backslash paths', () => {
+      expect(parseFunctionFile('group\\subgroup\\func.function.js', emptyConfig).exportKey).to.equal('group.subgroup.func');
+    });
+
+    it('handles mixed slash styles', () => {
+      expect(parseFunctionFile('group/subgroup\\func.function.js', emptyConfig).exportKey).to.equal('group.subgroup.func');
+    });
+  });
 });
 
 describe('findOversizedFunctions()', () => {
