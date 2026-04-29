@@ -4,7 +4,7 @@ import fs from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { EMPTY_FUNCTIONS_ERROR_MESSAGE, GENERATED_INDEX_FILE_NAME, generateIndexFile } from '../../../src/cli/generate_index_file.js';
-import type { ValidatedFunction } from '../../../src/cli/validate_functions.js';
+import type { ParsedFunction } from '../../../src/cli/parse_functions.js';
 import { Config } from '../../../src/cli/config.js';
 
 use(chaiAsPromised);
@@ -16,8 +16,8 @@ function readGeneratedFile() {
   return fs.readFileSync(resolve(testDir, GENERATED_INDEX_FILE_NAME), 'utf8');
 }
 
-function makeFunction(exportKey: string, filePath: string): ValidatedFunction {
-  return { functionId: exportKey.toLowerCase(), exportKey, filePath };
+function makeFunction(exportKey: string, filePath: string): ParsedFunction {
+  return { exportKey, filePath };
 }
 
 describe('generateIndexFile()', () => {

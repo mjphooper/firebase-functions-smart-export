@@ -5,7 +5,9 @@ import { findFunctionFiles } from './find_function_files.js';
 import { getAbsSourceDirPath } from './paths.js';
 import { styledConsoleOutput } from './styled_console_log.js';
 import { generateIndexFile } from './generate_index_file.js';
-import { validateFunctions } from './validate_functions.js';
+import { findDuplicateFunctions, findOversizedFunctions, parseFunctions } from './parse_functions.js';
+
+const FUNCTION_NAME_CHARACTER_LIMIT = 62;
 
 
 const HELP_MESSAGE = `
@@ -75,10 +77,30 @@ export async function main() {
       for (const file of files) styledConsoleOutput.info(file);
     }
 
-    const { functions } = validateFunctions(files, config);
+    const functions = parseFunctions(files, config);
+
+    const oversized = findOversizedFunctions(functions, FUNCTION_NAME_CHARACTER_LIMIT);
+    if (oversized.length > 0) {
+      const lines = oversized.map(fn => `  - ${fn.exportKey} (${fn.filePath})`);
+      throw new Error(
+        `Function names exceed the ${FUNCTION_NAME_CHARACTER_LIMIT} character limit:\n${lines.join('\n')}`
+      );
+    }
+
+    const duplicates = findDuplicateFunctions(functions);
+    if (duplicates.length > 0) {
+      const lines = duplicates.map(group =>
+        `  - ${group.map(fn => `${fn.exportKey} (${fn.filePath})`).join(', ')}`
+      );
+      throw new Error(
+        `Conflicting function names found:\n${lines.join('\n')}\n\n` +
+        `Firebase function names must be unique within a project, ignoring case. ` +
+        `Please change either your file structure or "ffse.config.json" to resolve the conflict.`
+      );
+    }
 
     if (verbose) {
-      for (const fn of functions) styledConsoleOutput.info(`${fn.functionId} (from "${fn.filePath}")`);
+      for (const fn of functions) styledConsoleOutput.info(`${fn.exportKey} (from "${fn.filePath}")`);
     }
 
     if (dryRun) {
