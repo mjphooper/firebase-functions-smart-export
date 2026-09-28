@@ -1,23 +1,40 @@
 # firebase-functions-smart-export
 
-  
 Firebase Functions Smart Export (FFSE) is a dynamic function exporter that streamlines function exporting and aims to improve cold start times. FFSE is a [pure ESM package](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c).
+
+> **Status:** This package is primarily maintained as internal tooling and a portfolio piece. If you're looking for a more battle-tested option, [better-firebase-functions](https://www.npmjs.com/package/better-firebase-functions) now supports ESM via `exportFunctionsAsync` and is likely the right choice for most projects. See [Comparison](#comparison) below.
 
 ## Highlights
 
 - ✨ **Zero-boilerplate exports** — Functions are automatically discovered, grouped, and exported based on file structure.
 - ⚡ **Faster cold starts** — Only the dependencies of the invoked function are loaded at runtime, rather than your entire codebase.
+- 🛠️ **Build-time codegen** — A static function map is written to disk; no runtime filesystem scanning.
 - 📦 **ESM native** — Built from the ground up for modern ES modules.
 
 ## Motivation
 
-Cold starts in Firebase Functions can be slow. By default, Node loads your entire codebase before executing any function—even dependencies that aren't needed.
+Cold starts in Firebase Functions can be slow. By default, Node loads your entire codebase before executing any function — even dependencies that aren't needed.
 
-The Firebase team [recommends lazy-loading](https://youtu.be/v3eG9xpzNXM) function implementations using dynamic `import()` to load only what's needed at runtime. This works well for small projects, but manually wiring up lazy exports becomes a real pain as projects grow in size and complexity. 
+The Firebase team [recommends lazy-loading](https://youtu.be/v3eG9xpzNXM) function implementations using dynamic `import()` to load only what's needed at runtime. This works well for small projects, but manually wiring up lazy exports becomes a real pain as projects grow in size and complexity.
 
-A solution was provided by [better-firebase-functions](https://www.npmjs.com/package/better-firebase-functions), alongside this [excellent explanatory article](https://medium.com/swlh/a-toolkit-to-speed-up-and-optimise-firebase-cloud-functions-part-1-6f74f278660c). However, this package only supports CommonJS. FFSE was created to bring the same benefits to modern ESM projects.
+[better-firebase-functions](https://www.npmjs.com/package/better-firebase-functions) ([explainer article](https://medium.com/swlh/a-toolkit-to-speed-up-and-optimise-firebase-cloud-functions-part-1-6f74f278660c)) was the original solution. When FFSE was first written, that package only supported CommonJS, so FFSE was built to bring the same benefits to ESM. BFF has since added `exportFunctionsAsync` for ESM, so the gap that originally motivated FFSE no longer exists.
 
-ESM requires static exports at compile, unlike CommonJS which supports dynamic export via `await require(...)`. FFSE solves this with codegen, producing an index file with your exports pre-defined.
+FFSE takes a different architectural approach: instead of globbing the filesystem at every cold start, it generates a static function map at build time. That tradeoff is the only meaningful difference between the two packages today.
+
+<a name="comparison"></a>
+## How FFSE differs from better-firebase-functions
+
+|                          | FFSE                                | better-firebase-functions (ESM)        |
+|--------------------------|-------------------------------------|----------------------------------------|
+| Function discovery       | Build-time codegen (`npx ffse`)     | Runtime filesystem glob                |
+| Build step required      | Yes (or hooked into existing build) | No                                     |
+| Function map             | Static, diffable in `index.gen.js`  | Built from glob on every cold start    |
+| Cold-start I/O           | None for discovery                  | One `fast-glob` scan per cold start    |
+| Runtime dependencies     | None (runtime is inlined)           | `fast-glob`                            |
+
+If you already run a build step before deploy (TypeScript compile, bundling, or `firebase.json`'s `predeploy` hook), wiring `ffse` into `prebuild` makes the codegen invisible — you run `firebase deploy` like you always did. In return, you get a static function map and zero runtime filesystem scanning.
+
+If you'd rather not have a build step at all, use BFF.
 
 ## Quick start
 
@@ -41,7 +58,7 @@ npx ffse
 > Consider adding `cd path/to/functions && npx ffse` to the "functions" pre-deployment script in `firebase.json` to automate this process.
 
 
-4. Replace the  contents of your `lib/index.js` (or `src/index.ts`) with:
+4. Replace the contents of your `lib/index.js` (or `src/index.ts`) with:
 ```javascript
 export * from './index.gen.js';
 ```
@@ -54,11 +71,11 @@ firebase deploy --only functions
 
 ## How it works
   
-🔍   **1.** The CLI tool searches your project for files matching the default glob pattern `*.function` which exports  Firebase Functions with corresponding names. To learn more, see [Exporting functions](#exporting-functions).
+🔍   **1.** At build time, the CLI searches your source directory for files matching `**/*.function.js` or `**/*.function.ts` (the `function` part is configurable via `matchExtension`). Each file's default export becomes a function, named after its path. To learn more, see [Exporting functions](#exporting-functions).
 
-🛠️ **2.**  An `index.gen.js` file is generated in your source directory (auto-detected or configured via `sourceDir`) that exports your functions in an ESM compatible manner.
+🛠️ **2.**  An `index.gen.js` file is generated in your source directory (auto-detected or configured via `sourceDir`). It contains a static map of every function name to its compiled file path, plus the small FFSE runtime inlined, so there is no runtime dependency on this package.
 
-⚡️**3.**  At runtime, FFSE dynamically discovers your function files and exports only the module required by the instance in which it is running, avoiding the overhead of loading unused dependencies.
+⚡️**3.**  At runtime, FFSE reads the static map and checks which function the instance is serving (via `FUNCTION_TARGET` or `K_SERVICE`). Only that function's module is imported, avoiding the overhead of loading unused dependencies. When no target is set (e.g. during deploy discovery), every function is loaded.
   
 <a name="exporting-functions"></a> 
 ## Exporting functions
@@ -85,7 +102,7 @@ FFSE provides multiple ways of customizing how groups are generated from file pa
 You can provide a `ffse.config.js` file in your project's root directory to configure the behavior of the build tool. You can use the public `defineConfig` function to assist in structuring your config.
 ```javascript
 // ./ffse.config.js
-import defineConfig from "firebase-functions-smart-export/cli/defineConfig";
+import { defineConfig } from 'firebase-functions-smart-export';
 
 export default defineConfig({...});
 ```
@@ -103,7 +120,7 @@ Possible configuration fields are:
 If your project uses non-standard directories (e.g., `dist/` instead of `lib/`):
 ```javascript
 // ./ffse.config.js
-import defineConfig from "firebase-functions-smart-export/cli/defineConfig";
+import { defineConfig } from 'firebase-functions-smart-export';
 
 export default defineConfig({
   sourceDir: 'src',
