@@ -21,6 +21,12 @@
     "lib/",
     "runtime.bundle.js"
   ],
+  "exports": {
+    ".": {
+      "types": "./lib/public_api.d.ts",
+      "default": "./lib/public_api.js"
+    }
+  },
   "homepage": "https://<organization/user>.github.io/<project>/",
   "repository": "https://github.com/<organization/user>/<project>.git",
   "bin": {
