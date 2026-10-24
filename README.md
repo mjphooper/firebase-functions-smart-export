@@ -1,5 +1,7 @@
 # firebase-functions-smart-export
 
+[![CI](https://github.com/mjphooper/firebase-functions-smart-export/actions/workflows/ci.yml/badge.svg)](https://github.com/mjphooper/firebase-functions-smart-export/actions/workflows/ci.yml)
+
 Firebase Functions Smart Export (FFSE) is a dynamic function exporter that streamlines function exporting and aims to improve cold start times. FFSE is a [pure ESM package](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c).
 
 > **Status:** This package is primarily maintained as internal tooling and a portfolio piece. If you're looking for a more battle-tested option, [better-firebase-functions](https://www.npmjs.com/package/better-firebase-functions) now supports ESM via `exportFunctionsAsync` and is likely the right choice for most projects. See [Comparison](#comparison) below.
