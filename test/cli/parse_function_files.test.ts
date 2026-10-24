@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { findDuplicateFunctions, findOversizedFunctions, parseFunctionFile, type ParsedFunction } from '../../src/cli/parse_function_files.js';
-import { Config } from '../../src/cli/config.js';
+import type { Config } from '../../src/cli/config.js';
 
 /** Builds a `ParsedFunction`; `filePath` defaults to `<exportKey>.function.js`. */
 const makeParsedFunction = (

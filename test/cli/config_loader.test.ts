@@ -3,7 +3,7 @@ import fs from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { getConfig } from '../../src/cli/config_loader.js';
-import { Config } from '../../src/cli/config.js';
+import type { Config } from '../../src/cli/config.js';
 
 describe('config_loader', () => {
   const __dirname = dirname(fileURLToPath(import.meta.url));
