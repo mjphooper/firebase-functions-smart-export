@@ -71,5 +71,8 @@
   "peerDependencies": {
     "firebase-functions": "^7.0.0"
   },
+  "engines": {
+    "node": ">=22"
+  },
   "license": "MIT"
 }
