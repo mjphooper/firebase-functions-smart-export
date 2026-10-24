@@ -33,13 +33,13 @@ it('falls back to K_SERVICE if FUNCTION_TARGET is undefined', () => {
 it('returns null if neither FUNCTION_TARGET nor K_SERVICE is set', () => {
   const env: Env = {};
   const result = getInstanceTargetId(env);
-  expect(result).to.be.null;
+  expect(result).to.equal(null);
 });
 
 it('returns null if target is an empty string', () => {
   const env: Env = { FUNCTION_TARGET: '', K_SERVICE: '' };
   const result = getInstanceTargetId(env);
-  expect(result).to.be.null;
+  expect(result).to.equal(null);
 });
 
 it('throws if target string does not match expected pattern', () => {
