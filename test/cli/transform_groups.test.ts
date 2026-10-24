@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { transformGroups } from "../../src/cli/transform_groups.js";
-import { Config } from "../../src/cli/config.js";
+import type { Config } from "../../src/cli/config.js";
 
 it('has no effect when the config is empty', () => {
   const config: Config = {};
