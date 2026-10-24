@@ -36,7 +36,9 @@
   "scripts": {
     "build": "rm -r -f lib && rm -f runtime.bundle.js && tsc -p tsconfig.build.json && esbuild src/runtime/index.ts --bundle --platform=node --target=node18 --outfile=runtime.bundle.js --format=esm --external:firebase-functions",
     "test": "npm run build && mocha",
-    "lint": "eslint ."
+    "coverage": "npm run build && c8 --include=src mocha",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json"
   },
   "type": "module",
   "dependencies": {
@@ -53,6 +55,7 @@
     "@types/mocha": "^10.0.10",
     "@types/sinon": "^21.0.1",
     "@types/sinon-chai": "^4.0.0",
+    "c8": "^12.0.0",
     "chai": "^6.2.2",
     "chai-as-promised": "^8.0.2",
     "dset": "^3.1.4",

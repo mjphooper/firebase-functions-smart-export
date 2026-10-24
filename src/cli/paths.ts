@@ -1,4 +1,3 @@
-/* istanbul ignore file */
 import fs from 'fs';
 import { join, resolve } from 'path';
 import { DEFAULT_OUT_DIR, DEFAULT_SOURCE_DIR } from './config.js';
