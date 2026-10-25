@@ -46,6 +46,7 @@
     "change-case": "^5.4.4",
     "commander": "^14.0.3",
     "fast-glob": "^3.3.3",
+    "indent-string": "^5.0.0",
     "slash": "^5.1.0"
   },
   "devDependencies": {
