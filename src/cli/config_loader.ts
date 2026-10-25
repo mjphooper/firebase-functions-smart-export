@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import { join } from 'path';
+import { pathToFileURL } from 'url';
 import type { Config } from './config.js';
 
 /** The name of the user created configuration file. */
@@ -10,9 +11,12 @@ export const CONFIG_FILE_NAME = 'ffse.config.js';
  *
  * Returns an `unknown` object to reflect we have no control over the contents of
  * the config.
+ *
+ * The path is converted to a `file:` URL first: `import()` takes URLs, so a raw
+ * Windows path (`C:\...`) or one containing `#` or `%` would fail to load.
  */
 export async function getModuleDefault(configPath: string): Promise<unknown> {
-  const module = await import(configPath);
+  const module = await import(pathToFileURL(configPath).href);
   return module.default;
 }
 
