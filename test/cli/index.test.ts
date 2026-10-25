@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import fs from 'fs';
 import { dirname, join, resolve } from 'path';
 import sinon from 'sinon';
+import { pathToFileURL } from 'url';
 import type { Config } from '../../src/cli/config.js';
 import { GENERATED_INDEX_FILE_NAME } from '../../src/cli/generate_index_file.js';
 import { main } from '../../src/cli/index.js';
@@ -19,7 +20,7 @@ async function importGeneratedIndex(projectRoot: string, sourceDir = 'src'): Pro
   const originalCwd = process.cwd();
   process.chdir(projectRoot);
   try {
-    return await import(resolve(projectRoot, sourceDir, GENERATED_INDEX_FILE_NAME));
+    return await import(pathToFileURL(resolve(projectRoot, sourceDir, GENERATED_INDEX_FILE_NAME)).href);
   } finally {
     process.chdir(originalCwd);
   }

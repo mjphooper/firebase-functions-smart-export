@@ -54,4 +54,20 @@ describe('config_loader', () => {
 
     await expect(getConfig(fixturesPath)).to.be.rejectedWith(Error);
   });
+
+  it('loads config from a path that is not a valid URL as-is', async () => {
+    // Arrange
+    // `#` would start a URL fragment if the path were passed to `import()`
+    // unconverted, the same class of bug as Windows drive letters (`C:`).
+    const projectPath = resolve(fixturesPath, 'my#project');
+    fs.mkdirSync(projectPath);
+    const fileConfig: Config = { useSingleQuotes: true };
+    fs.writeFileSync(resolve(projectPath, 'ffse.config.js'), `export default ${JSON.stringify(fileConfig)};\n`);
+
+    // Act
+    const config = await getConfig(projectPath);
+
+    // Assert
+    expect(config).to.deep.equal(fileConfig);
+  });
 });
