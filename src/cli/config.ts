@@ -84,13 +84,6 @@ export interface Config {
 
 
   /**
-   * Whether to show function export logs.
-   * 
-   * Defaults to `false`.
-   */
-  logs?: boolean,
-
-  /**
    * Whether to use single quotes (instead of double) in the generated code.
    * 
    * Defaults to `false`.
