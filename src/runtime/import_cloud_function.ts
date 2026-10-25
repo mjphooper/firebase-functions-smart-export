@@ -1,3 +1,5 @@
+import { pathToFileURL } from 'url';
+
 /**
  * Dynamically imports a compiled Cloud Function module and returns its default export.
  *
@@ -12,7 +14,8 @@
  * if the imported module has no default export.
  */
 export async function importCloudFunction(absPath: string): Promise<object> {
-  const module = await import(absPath);
+  // `import()` takes URLs; a raw Windows path (`C:\...`) would fail to load.
+  const module = await import(pathToFileURL(absPath).href);
   const hasDefaultExport: boolean = module.default != undefined;
 
   if (!hasDefaultExport) {
