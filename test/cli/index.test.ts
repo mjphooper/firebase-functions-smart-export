@@ -189,7 +189,7 @@ describe('cli main()', () => {
 
     // Assert
     expect(code).to.equal(1);
-    expect(errorStub).to.have.been.calledWithMatch(/exceed the \d+ character limit/);
+    expect(errorStub).to.have.been.calledWithMatch(/exceeds the \d+ character limit/);
     expect(generatedIndexExists()).to.equal(false);
   });
 
@@ -207,6 +207,42 @@ describe('cli main()', () => {
     expect(code).to.equal(1);
     expect(errorStub).to.have.been.calledWithMatch(/Conflicting function names/);
     expect(generatedIndexExists()).to.equal(false);
+  });
+
+  it('returns 1 and reports every problem in one error when several checks fail', async () => {
+    // Arrange
+    writeFunctionFile(`${'a'.repeat(63)}.function.js`);
+    writeFunctionFile('auth/foo.function.js');
+    writeFunctionFile('chats/foo.function.js');
+    writeConfigFile({ disableGroups: true });
+    const errorStub = sinon.stub(styledConsoleOutput, 'error');
+
+    // Act
+    const code = await main({ cwd: projectRoot });
+
+    // Assert
+    expect(code).to.equal(1);
+    sinon.assert.calledOnce(errorStub);
+    const [report] = errorStub.firstCall.args;
+    expect(report).to.match(/exceeds the \d+ character limit/);
+    expect(report).to.contain('Conflicting function names');
+    expect(report).to.contain('auth/foo.function.js');
+    expect(report).to.contain('chats/foo.function.js');
+    expect(generatedIndexExists()).to.equal(false);
+  });
+
+  it('returns 1 without reporting success when a dry run finds validation errors', async () => {
+    // Arrange
+    writeFunctionFile(`${'a'.repeat(63)}.function.js`);
+    sinon.stub(styledConsoleOutput, 'error');
+    const successStub = sinon.stub(styledConsoleOutput, 'success');
+
+    // Act
+    const code = await main({ cwd: projectRoot, dryRun: true });
+
+    // Assert
+    expect(code).to.equal(1);
+    sinon.assert.notCalled(successStub);
   });
 
   it('generates the index and warns about allowJs when given mixed .ts and .js function files', async () => {
