@@ -47,7 +47,7 @@ export interface Config {
    * will produce a function export name of `chats-callable-createChat` given an
    * `ignoreGroups` value of `[features, functions]`.
    *
-   * Applied before `transformPath`, if both are used.
+   * Applied before `mapGroups`, if both are used.
    */
   ignoreGroups?: string[],
 
