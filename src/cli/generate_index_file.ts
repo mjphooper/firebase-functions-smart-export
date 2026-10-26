@@ -1,7 +1,7 @@
 import fs from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { DEFAULT_OUT_DIR, type Config } from './config.js';
+import { join } from 'node:path';
+import type { ExportTree } from './build_export_tree.js';
+import type { Config } from './config.js';
 import type { ParsedFunction } from './parse_function_files.js';
 
 /** The name of the generated index file. */
@@ -9,79 +9,107 @@ export const GENERATED_INDEX_FILE_NAME = 'index.gen.js';
 
 type StringTransformer = (text: string) => string;
 
-export const EMPTY_FUNCTIONS_ERROR_MESSAGE =
-  'Cannot generate index file: no functions found. This should not be called with an empty function list.';
-
-function findOwnPackageRoot(): string {
-  let dir = dirname(fileURLToPath(import.meta.url));
-  while (dir !== dirname(dir)) {
-    if (fs.existsSync(join(dir, 'package.json'))) return dir;
-    dir = dirname(dir);
-  }
-  throw new Error('Could not locate firebase-functions-smart-export package root');
-}
-
-function readRuntimeBundle(): string {
-  const bundlePath = join(findOwnPackageRoot(), 'runtime.bundle.js');
-  return fs.readFileSync(bundlePath, 'utf8');
-}
-
+/**
+ * Returns a function that wraps text in the configured quote character,
+ * escaping backslashes and that quote character.
+ */
 function getQuoteWrapperFor(config: Config): StringTransformer {
   const quoteCharacter = config.useSingleQuotes ? `'` : `"`;
-  return (text: string) => `${quoteCharacter}${text}${quoteCharacter}`;
+  return (text: string) => {
+    const escaped = text.replaceAll('\\', '\\\\').replaceAll(quoteCharacter, `\\${quoteCharacter}`);
+    return `${quoteCharacter}${escaped}${quoteCharacter}`;
+  };
 }
 
-function writeFunctionMap(functions: ParsedFunction[], outDir: string, config: Config): string {
-  const quote = getQuoteWrapperFor(config);
-  const entries = functions.map(({ exportKey, filePath }) => {
-    const path = join(outDir, filePath).replace(/\\/g, '/');
-    return `  ${quote(exportKey)}: ${quote(path)}`;
-  });
-  return `const functionMap = {\n${entries.join(',\n')},\n};`;
+/** The lowercase key the generated code compares against the normalised target. */
+function toTargetKey(exportKey: string): string {
+  return exportKey.toLowerCase();
 }
 
-function writeImportsAndSetup(functions: ParsedFunction[], outDir: string, config: Config): string {
+/** The import specifier for a function file, relative to the generated index. */
+function toImportPath(filePath: string): string {
+  return `./${filePath.replace(/\\/g, '/')}`;
+}
+
+// Helpers start with `_` so they can never clash with an export: `camelCase`
+// strips leading underscores, so no export key can start with one.
+function writeSetup(functions: ParsedFunction[], quote: StringTransformer): string {
+  const targetKeys = functions.map(({ exportKey }) => quote(toTargetKey(exportKey))).join(', ');
   return [
-    '// GENERATED CODE - DO NOT MODIFY BY HAND',
-    readRuntimeBundle().trimEnd(),
+    `const _target = (process.env.FUNCTION_TARGET || process.env.K_SERVICE || ${quote('')}).replaceAll(${quote('-')}, ${quote('.')}).toLowerCase();`,
     '',
-    writeFunctionMap(functions, outDir, config),
+    `if (_target && ![${targetKeys}].includes(_target)) {`,
+    '  throw new Error(`Function "${_target}" not found in index.gen.js. Have you run ffse since adding it?`);',
+    '}',
     '',
-    `const exportMap = await createExportMap(functionMap);`,
-    ''
+    'const _load = (key, path, importer) => !_target || _target === key',
+    '  ? importer().then((module) => {',
+    '      if (module.default === undefined) {',
+    '        throw new Error(`Function at path ${path} has no default export. Did you forget to add "export default" to the function definition?`);',
+    '      }',
+    '      return module.default;',
+    '    })',
+    '  : undefined;',
   ].join('\n');
 }
 
-function writeExports(functions: ParsedFunction[]): string {
-  const topLevelKeys = [...new Set(functions.map(({ exportKey }) => exportKey.split('.')[0]))];
-  return topLevelKeys.map((key) => `export const ${key} = exportMap.${key};`).join('\n');
+function writeLoads(functions: ParsedFunction[], quote: StringTransformer): string {
+  const loads = functions.map(({ exportKey, filePath }) => {
+    const path = quote(toImportPath(filePath));
+    return `  _load(${quote(toTargetKey(exportKey))}, ${path}, () => import(${path})),`;
+  });
+  return `const _functions = await Promise.all([\n${loads.join('\n')}\n]);`;
+}
+
+function writeExportValue(value: ExportTree | number): string {
+  if (typeof value === 'number') return `_functions[${value}]`;
+  const entries = [...value].map(([key, child]) => `${key}: ${writeExportValue(child)}`);
+  return `{ ${entries.join(', ')} }`;
+}
+
+function writeExports(exportTree: ExportTree): string {
+  return [...exportTree]
+    .map(([key, value]) => `export const ${key} = ${writeExportValue(value)};`)
+    .join('\n');
 }
 
 /**
  * Generates the index file that exports all functions.
  *
- * Writes a JS file to the source directory containing a pre-computed
- * `functionMap` (exportKey → path), setup code, and top-level export
- * statements.
+ * Writes a self-contained JS file to the source directory. It reads the
+ * function target from `FUNCTION_TARGET` or `K_SERVICE` and imports only that
+ * function's module, or every module in parallel when no target is set (as
+ * during deploy discovery). An unknown target throws at import time.
+ *
+ * Imports are relative to the generated file, so the compiled output must
+ * mirror the source directory's structure.
  *
  * @param preferredSourceDir - The directory to write the generated file to.
  * @param functions - The validated functions with export keys and file paths.
+ * @param exportTree - The nested exports, built from `functions` by
+ * `buildExportTree()`. Its leaves index into `functions`.
  * @param config - Configuration options affecting output format.
  */
 export async function generateIndexFile(
   preferredSourceDir: string,
   functions: ParsedFunction[],
+  exportTree: ExportTree,
   config: Config,
 ): Promise<void> {
   if (functions.length === 0) {
-    throw new Error(EMPTY_FUNCTIONS_ERROR_MESSAGE);
+    throw new Error('Cannot generate index file: no functions found. This should not be called with an empty function list.');
   }
 
-  const outDir = config.outDir ?? DEFAULT_OUT_DIR;
+  const quote = getQuoteWrapperFor(config);
 
   const contents = [
-    writeImportsAndSetup(functions, outDir, config),
-    writeExports(functions),
+    '// GENERATED CODE - DO NOT MODIFY BY HAND',
+    writeSetup(functions, quote),
+    '',
+    writeLoads(functions, quote),
+    '',
+    writeExports(exportTree),
+    '',
   ].join('\n');
 
   fs.writeFileSync(join(preferredSourceDir, GENERATED_INDEX_FILE_NAME), contents, 'utf8');

@@ -9,21 +9,9 @@ import { main } from '../../src/cli/index.js';
 import { styledConsoleOutput } from '../../src/cli/styled_console_log.js';
 import { useSandbox } from '../helpers/sandbox.js';
 
-/**
- * Dynamically imports the generated index file and returns its module namespace.
- *
- * Temporarily switches `process.cwd()` to `projectRoot` for the duration of the
- * import, since the runtime resolves function paths against the current working
- * directory. The original cwd is restored before this helper returns.
- */
+/** Dynamically imports the generated index file and returns its module namespace. */
 async function importGeneratedIndex(projectRoot: string, sourceDir = 'src'): Promise<Record<string, unknown>> {
-  const originalCwd = process.cwd();
-  process.chdir(projectRoot);
-  try {
-    return await import(pathToFileURL(resolve(projectRoot, sourceDir, GENERATED_INDEX_FILE_NAME)).href);
-  } finally {
-    process.chdir(originalCwd);
-  }
+  return import(pathToFileURL(resolve(projectRoot, sourceDir, GENERATED_INDEX_FILE_NAME)).href);
 }
 
 describe('cli main()', () => {
@@ -99,16 +87,13 @@ describe('cli main()', () => {
     // Assert
     expect(code).to.equal(0);
     const content = readGeneratedIndex();
-    expect(content).to.contain('"hello": "lib/hello.function.js"');
-    expect(content).to.contain('export const hello = exportMap.hello;');
+    expect(content).to.contain('import("./hello.function.js")');
+    expect(content).to.contain('export const hello = _functions[0];');
   });
 
   it('produces a runnable index file whose named exports resolve to the source functions', async () => {
     // Arrange
-    // outDir: 'src' so the functionMap path resolves to where the (uncompiled)
-    // source file actually lives — there's no tsc step in tests.
     writeFunctionFile('hello.function.js', 'src', 'export default { id: "hello" };');
-    writeConfigFile({ outDir: 'src' });
 
     // Act
     const code = await main({ cwd: projectRoot });
@@ -123,7 +108,6 @@ describe('cli main()', () => {
     // Arrange
     writeFunctionFile('auth/onCreate.function.js', 'src', 'export default { id: "auth.onCreate" };');
     writeFunctionFile('chats/messages/onSend.function.js', 'src', 'export default { id: "chats.messages.onSend" };');
-    writeConfigFile({ outDir: 'src' });
 
     // Act
     const code = await main({ cwd: projectRoot });
@@ -149,20 +133,22 @@ describe('cli main()', () => {
 
       // Assert
       expect(code).to.equal(0);
-      expect(readGeneratedIndex('app')).to.contain(`'foo': 'lib/foo.function.js'`);
+      expect(readGeneratedIndex('app')).to.contain(`import('./foo.function.js')`);
     });
 
-    it('honours outDir', async () => {
+    it('returns 1 without writing the index when outDir is set', async () => {
       // Arrange
       writeFunctionFile('foo.function.js');
-      writeConfigFile({ outDir: 'build' });
+      writeConfigFile({ outDir: 'build' } as Config);
+      const errorStub = sinon.stub(styledConsoleOutput, 'error');
 
       // Act
       const code = await main({ cwd: projectRoot });
 
       // Assert
-      expect(code).to.equal(0);
-      expect(readGeneratedIndex()).to.contain('"foo": "build/foo.function.js"');
+      expect(code).to.equal(1);
+      expect(errorStub).to.have.been.calledWithMatch(/`outDir` is no longer supported/);
+      expect(generatedIndexExists()).to.equal(false);
     });
 
     it('honours matchExtension', async () => {
@@ -175,7 +161,7 @@ describe('cli main()', () => {
 
       // Assert
       expect(code).to.equal(0);
-      expect(readGeneratedIndex()).to.contain('"hello": "lib/hello.fn.js"');
+      expect(readGeneratedIndex()).to.contain('import("./hello.fn.js")');
     });
   });
 
@@ -287,7 +273,7 @@ describe('cli main()', () => {
 
     // Assert
     expect(code).to.equal(0);
-    expect(readGeneratedIndex()).to.contain('export const v2 = exportMap.v2;');
+    expect(readGeneratedIndex()).to.contain('export const v2 = { thing: _functions[0] };');
   });
 
   it('returns 1 without reporting success when a dry run finds validation errors', async () => {
@@ -316,8 +302,8 @@ describe('cli main()', () => {
     // Assert
     expect(code).to.equal(0);
     const content = readGeneratedIndex();
-    expect(content).to.contain('"foo": "lib/foo.function.js"');
-    expect(content).to.contain('"bar": "lib/bar.function.js"');
+    expect(content).to.contain('import("./foo.function.js")');
+    expect(content).to.contain('import("./bar.function.js")');
     expect(warnStub).to.have.been.calledWithMatch(/allowJs/);
   });
 

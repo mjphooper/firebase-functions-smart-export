@@ -32,7 +32,7 @@ FFSE takes a different architectural approach: instead of globbing the filesyste
 | Build step required      | Yes (or hooked into existing build) | No                                     |
 | Function map             | Static, diffable in `index.gen.js`  | Built from glob on every cold start    |
 | Cold-start I/O           | None for discovery                  | One `fast-glob` scan per cold start    |
-| Runtime dependencies     | None (runtime is inlined)           | `fast-glob`                            |
+| Runtime dependencies     | None                                | `fast-glob`                            |
 
 If you already run a build step before deploy (TypeScript compile, bundling, or `firebase.json`'s `predeploy` hook), wiring `ffse` into `prebuild` makes the codegen invisible — you run `firebase deploy` like you always did. In return, you get a static function map and zero runtime filesystem scanning.
 
@@ -75,9 +75,9 @@ firebase deploy --only functions
   
 🔍   **1.** At build time, the CLI searches your source directory for files matching `**/*.function.js` or `**/*.function.ts` (the `function` part is configurable via `matchExtension`). Each file's default export becomes a function, named after its path. To learn more, see [Exporting functions](#exporting-functions).
 
-🛠️ **2.**  An `index.gen.js` file is generated in your source directory (auto-detected or configured via `sourceDir`). It contains a static map of every function name to its compiled file path, plus the small FFSE runtime inlined, so there is no runtime dependency on this package.
+🛠️ **2.**  An `index.gen.js` file is generated in your source directory (auto-detected or configured via `sourceDir`). It contains a literal `import()` for every function, relative to the generated file, and nests them into named exports matching your function groups. It has no dependency on this package at runtime.
 
-⚡️**3.**  At runtime, FFSE reads the static map and checks which function the instance is serving (via `FUNCTION_TARGET` or `K_SERVICE`). Only that function's module is imported, avoiding the overhead of loading unused dependencies. When no target is set (e.g. during deploy discovery), every function is loaded.
+⚡️**3.**  At runtime, `index.gen.js` checks which function the instance is serving (via `FUNCTION_TARGET` or `K_SERVICE`). Only that function's module is imported, avoiding the overhead of loading unused dependencies. When no target is set (e.g. during deploy discovery), every function is imported in parallel. If the target isn't in the generated file, it throws an error asking you to rerun `ffse`.
   
 <a name="exporting-functions"></a> 
 ## Exporting functions
@@ -110,7 +110,6 @@ export default defineConfig({...});
 ```
 Possible configuration fields are:
 - `sourceDir`: The directory containing your function source files, relative to the project root. For TypeScript projects, this is typically `'src'`. For JavaScript projects, this is typically `'lib'`. If not specified, FFSE will auto-detect by checking for `src/` first, then `lib/`.
-- `outDir`: The directory containing compiled JavaScript files at runtime, relative to the project root. This is where the runtime will look for function modules to import. Defaults to `'lib'`.
 - `matchExtension`: The file extension used to identify the files containing your functions. This defaults to `"function"`.
 - `ignoreGroups`: A list of groups to exclude from the final function name. This can be used to remove path segments with no semantic value from the exported function name.
 - `maxGroupDepth`: Limits the number of groups in function names.
@@ -118,24 +117,25 @@ Possible configuration fields are:
 - `mapGroups`: Custom mapper that allows you to apply any transformation to the list of groups proposed for a given function.
 - `useSingleQuotes`: Whether to use single quotes `'` (instead of double) in the generated code. Alternatively, you can add `index.gen.js` as an exception in your linter config.
 
-### Example: Custom directories
-If your project uses non-standard directories (e.g., `dist/` instead of `lib/`):
+### Example: Custom source directory
+If your function sources live somewhere other than `src/` or `lib/`:
 ```javascript
 // ./ffse.config.js
 import { defineConfig } from 'firebase-functions-smart-export';
 
 export default defineConfig({
-  sourceDir: 'src',
-  outDir: 'dist',
+  sourceDir: 'app',
 });
 ```
 
 ## TypeScript and ESM
-FFSE ships with TypeScript definitions and works straight out of the box in TypeScript projects. By default, FFSE uses `src/` as the source directory and uses `lib/` as the compiled output directory containing your JavaScript files. If your project uses different directories, configure `sourceDir` and `outDir` in your `ffse.config.js`.
+FFSE ships with TypeScript definitions and works straight out of the box in TypeScript projects. By default, FFSE uses `src/` as the source directory; configure `sourceDir` in your `ffse.config.js` if yours differs. The compiled output can live anywhere, as `index.gen.js` imports your functions relative to itself.
+
+`index.gen.js` is a JavaScript file written into your source directory, so set `allowJs: true` in your `tsconfig.json` for `tsc` to copy it into your output directory.
 
 
 ## Limitations
-- FFSE assumes that your source directory structure matches your output directory structure after compilation. This is the default behavior of TypeScript and most build tools.
+- FFSE assumes that your output directory mirrors your source directory's structure after compilation, since `index.gen.js` imports each function by its path relative to itself. This is the default behavior of TypeScript and most build tools.
 
 ## Troubleshooting
 

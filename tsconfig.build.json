@@ -1,4 +1,4 @@
-// Build config for the CLI output (tsc); src/runtime is bundled separately by esbuild.
+// Build config for the CLI output (tsc).
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
@@ -11,7 +11,6 @@
   ],
   "exclude": [
     "node_modules",
-    "test",
-    "src/runtime"
+    "test"
   ]
 }
