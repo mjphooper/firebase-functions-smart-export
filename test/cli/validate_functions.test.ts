@@ -134,6 +134,73 @@ describe('validateFunctions()', () => {
     });
   });
 
+  describe('prefix collisions', () => {
+    it('flags a function that shares its name with a group, naming both files', () => {
+      // Arrange
+      const fn = makeParsedFunction('posts', 'posts.function.ts');
+      const nested = makeParsedFunction('posts.create', 'posts/create.function.ts');
+
+      // Act
+      const issues = validateFunctions([fn, nested]);
+
+      // Assert
+      expect(issues).to.have.lengthOf(1);
+      expect(issues[0]).to.deep.include({
+        type: 'prefix-collision',
+        exportKey: 'posts',
+        nestedExportKeys: ['posts.create'],
+        filePaths: ['posts.function.ts', 'posts/create.function.ts'],
+      });
+      expect(issues[0].message).to.contain('"posts" is both a function and a group holding "posts.create"');
+      expect(issues[0].message).to.contain('"ffse.config.js"');
+    });
+
+    it('ignores case', () => {
+      // Act
+      const issues = validateFunctions([makeParsedFunction('Posts'), makeParsedFunction('posts.create')]);
+
+      // Assert
+      expect(issues.map(issue => issue.type)).to.deep.equal(['prefix-collision']);
+    });
+
+    it('flags collisions at any depth', () => {
+      // Arrange
+      const ab = makeParsedFunction('a.b', 'a/b.function.ts');
+      const abc = makeParsedFunction('a.b.c', 'a/b/c.function.ts');
+      const x = makeParsedFunction('x', 'x.function.ts');
+      const xyz = makeParsedFunction('x.y.z', 'x/y/z.function.ts');
+
+      // Act
+      const issues = validateFunctions([ab, abc, x, xyz]);
+
+      // Assert
+      expect(issues.map(issue => issue.filePaths)).to.deep.equal([
+        ['a/b.function.ts', 'a/b/c.function.ts'],
+        ['x.function.ts', 'x/y/z.function.ts'],
+      ]);
+    });
+
+    it('reports every function nested under the colliding name in one issue', () => {
+      // Arrange
+      const functions = ['posts', 'posts.create', 'posts.delete'].map(key => makeParsedFunction(key));
+
+      // Act
+      const issues = validateFunctions(functions);
+
+      // Assert
+      expect(issues).to.have.lengthOf(1);
+      expect(issues[0].message).to.contain('holding "posts.create" and "posts.delete"');
+    });
+
+    it('accepts names that only share a leading substring', () => {
+      // Act
+      const issues = validateFunctions([makeParsedFunction('post'), makeParsedFunction('posts.create')]);
+
+      // Assert
+      expect(issues).to.deep.equal([]);
+    });
+  });
+
   describe('reserved words', () => {
     it('flags a reserved top-level name, naming the word and how to fix it', () => {
       // Arrange
@@ -237,7 +304,7 @@ describe('validateFunctions()', () => {
 
     it('flags an empty segment in the middle or at the end', () => {
       // Act
-      const issues = validateFunctions([makeParsedFunction('a..foo'), makeParsedFunction('a.')]);
+      const issues = validateFunctions([makeParsedFunction('a..foo'), makeParsedFunction('b.')]);
 
       // Assert
       expect(issues.map(issue => issue.type)).to.deep.equal(['invalid-characters', 'invalid-characters']);

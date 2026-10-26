@@ -22,10 +22,14 @@ type ValidationIssue = {
     | { type: 'leading-non-letter'; exportKey: string }
     | { type: 'invalid-characters'; exportKey: string }
     | { type: 'duplicate-names'; exportKeys: string[] }
+    | { type: 'prefix-collision'; exportKey: string; nestedExportKeys: string[] }
   );
 
 /** String prompting the user to rename an invalid function. */
 const RENAME_HINT = 'Rename the file or folder, or remap it in "ffse.config.js".';
+
+/** Formats a list of names as "a", "b" and "c". */
+const listFormat = new Intl.ListFormat('en-GB', { type: 'conjunction' });
 
 /**
  * Runs every check against the parsed functions and returns all issues found.
@@ -39,7 +43,7 @@ export function validateFunctions(functions: ParsedFunction[]): ValidationIssue[
   const checks = [checkLength, checkReservedWord, checkLeadingLetter, checkCharacters];
   const functionIssues = checks.flatMap(check => functions.map(check).filter(issue => issue !== null));
 
-  return [...functionIssues, ...findDuplicateNames(functions)];
+  return [...functionIssues, ...findDuplicateNames(functions), ...findPrefixCollisions(functions)];
 }
 
 /**
@@ -147,7 +151,6 @@ function findDuplicateNames(functions: ParsedFunction[]): ValidationIssue[] {
     .filter(group => group.length > 1)
     .map(group => {
       const exportKeys = group.map(fn => fn.exportKey);
-      const listFormat = new Intl.ListFormat('en-GB', { type: 'conjunction' });
 
       return {
         type: 'duplicate-names',
@@ -159,4 +162,33 @@ function findDuplicateNames(functions: ParsedFunction[]): ValidationIssue[] {
           'Change your file structure or "ffse.config.js" to resolve the conflict.',
       };
     });
+}
+
+/**
+ * Returns one issue per function whose export key is also a group holding
+ * other functions, compared case-insensitively.
+ *
+ * `posts` and `posts.create` would make `posts` both a Cloud Function and an
+ * object holding `create`, and which one is deployed depends on load order.
+ * Any depth counts (`a.b` vs `a.b.c`, or `a` vs `a.b.c`), but only whole
+ * segments: `post` and `posts.create` don't collide. Case is ignored for the
+ * same reason as in {@link findDuplicateNames}.
+ */
+function findPrefixCollisions(functions: ParsedFunction[]): ValidationIssue[] {
+  return functions.flatMap((fn): ValidationIssue[] => {
+    const groupPrefix = `${fn.exportKey.toLowerCase()}.`;
+    const nested = functions.filter(other => other.exportKey.toLowerCase().startsWith(groupPrefix));
+    if (nested.length === 0) return [];
+
+    const nestedExportKeys = nested.map(other => other.exportKey);
+    return [{
+      type: 'prefix-collision',
+      exportKey: fn.exportKey,
+      nestedExportKeys,
+      filePaths: [fn.filePath, ...nested.map(other => other.filePath)],
+      message:
+        `"${fn.exportKey}" is both a function and a group holding ` +
+        `${listFormat.format(nestedExportKeys.map(key => `"${key}"`))}. ${RENAME_HINT}`,
+    }];
+  });
 }
