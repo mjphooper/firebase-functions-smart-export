@@ -1,5 +1,6 @@
 import indentString from 'indent-string';
-import { DEFAULT_MATCH_EXTENSION, DEFAULT_OUT_DIR, DEFAULT_SOURCE_DIR } from './config.js';
+import { buildExportTree } from './build_export_tree.js';
+import { DEFAULT_MATCH_EXTENSION, DEFAULT_SOURCE_DIR } from './config.js';
 import { getConfig } from './config_loader.js';
 import { findFunctionFiles } from './find_function_files.js';
 import { generateIndexFile } from './generate_index_file.js';
@@ -24,14 +25,18 @@ export async function main({
       if (hasCustomConfig) styledConsoleOutput.info('⚙️ Custom config loaded from ffse.config.js');
     }
 
+    if ('outDir' in config) {
+      styledConsoleOutput.error('`outDir` is no longer supported. Remove it from ffse.config.js: index.gen.js now imports functions relative to itself.');
+      return 1;
+    }
+
     const absSourcePath = getAbsSourceDirPath(cwd, config.sourceDir);
     styledConsoleOutput.info(`Resolved source code path to: ${absSourcePath}`);
 
     if (verbose) {
       const sourceDir = config.sourceDir ?? DEFAULT_SOURCE_DIR;
-      const outDir = config.outDir ?? DEFAULT_OUT_DIR;
       const matchExtension = config.matchExtension ?? DEFAULT_MATCH_EXTENSION;
-      styledConsoleOutput.info(`Searching for .${matchExtension} files in ${sourceDir}/, outputting to ${outDir}/`);
+      styledConsoleOutput.info(`Searching for .${matchExtension} files in ${sourceDir}/`);
     }
 
     const { files, hasMixedFileTypes } = findFunctionFiles(absSourcePath, config.matchExtension);
@@ -72,7 +77,8 @@ export async function main({
       return 0;
     }
 
-    await generateIndexFile(absSourcePath, functions, config);
+    const exportTree = buildExportTree(functions);
+    await generateIndexFile(absSourcePath, functions, exportTree, config);
 
     const timing = verbose ? ` in ${Math.round(performance.now() - startTime)}ms` : '';
     styledConsoleOutput.success(`[ffse] ✅ Success! Exported ${functionCount} function(s)${timing}`);

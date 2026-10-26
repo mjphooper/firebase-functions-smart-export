@@ -18,8 +18,7 @@
   ],
   "files": [
     "bin/",
-    "lib/",
-    "runtime.bundle.js"
+    "lib/"
   ],
   "exports": {
     ".": {
@@ -34,7 +33,7 @@
     "firebase-functions-smart-export": "./bin/ffse.js"
   },
   "scripts": {
-    "build": "rm -r -f lib && rm -f runtime.bundle.js && tsc -p tsconfig.build.json && esbuild src/runtime/index.ts --bundle --platform=node --target=node18 --outfile=runtime.bundle.js --format=esm --external:firebase-functions",
+    "build": "rm -r -f lib && tsc -p tsconfig.build.json",
     "test": "npm run build && mocha",
     "coverage": "npm run build && c8 --include=src mocha",
     "lint": "eslint .",
