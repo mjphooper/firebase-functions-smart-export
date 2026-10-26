@@ -1,3 +1,4 @@
+import { isKeyword, isStrictBindReservedWord } from '@babel/helper-validator-identifier';
 import type { ParsedFunction } from './parse_function_files.js';
 
 /** Maximum length of a Firebase Cloud Function name. */
@@ -17,8 +18,14 @@ type ValidationIssue = {
   filePaths: string[];
 } & (
     | { type: 'too-long'; exportKey: string; limit: number }
+    | { type: 'reserved-word'; exportKey: string; word: string }
+    | { type: 'leading-non-letter'; exportKey: string }
+    | { type: 'invalid-characters'; exportKey: string }
     | { type: 'duplicate-names'; exportKeys: string[] }
   );
+
+/** String prompting the user to rename an invalid function. */
+const RENAME_HINT = 'Rename the file or folder, or remap it in "ffse.config.js".';
 
 /**
  * Runs every check against the parsed functions and returns all issues found.
@@ -29,7 +36,7 @@ type ValidationIssue = {
  * between functions. An empty result means the functions are safe to export.
  */
 export function validateFunctions(functions: ParsedFunction[]): ValidationIssue[] {
-  const checks = [checkLength];
+  const checks = [checkLength, checkReservedWord, checkLeadingLetter, checkCharacters];
   const functionIssues = checks.flatMap(check => functions.map(check).filter(issue => issue !== null));
 
   return [...functionIssues, ...findDuplicateNames(functions)];
@@ -49,6 +56,79 @@ function checkLength({ exportKey, filePath }: ParsedFunction): ValidationIssue |
     limit: FUNCTION_NAME_CHARACTER_LIMIT,
     filePaths: [filePath],
     message: `"${exportKey}" exceeds the ${FUNCTION_NAME_CHARACTER_LIMIT} character limit for function names.`,
+  };
+}
+
+/**
+ * Flags a top-level name that is a JavaScript reserved word.
+ *
+ * Only the first segment is checked: it becomes `export const <name>` in the
+ * generated index, where a reserved word is a syntax error. Nested segments are
+ * plain object keys, so `v2.delete` is fine.
+ *
+ * Module code is always strict, so this covers keywords, literals, strict-mode
+ * and module-only reserved words (`let`, `await`, ...), and `arguments` / `eval`,
+ * which can't be bound in strict mode.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#reserved_words
+ */
+function checkReservedWord({ exportKey, filePath }: ParsedFunction): ValidationIssue | null {
+  const word = exportKey.split('.')[0];
+  if (!isKeyword(word) && !isStrictBindReservedWord(word, true)) return null;
+  return {
+    type: 'reserved-word',
+    exportKey,
+    word,
+    filePaths: [filePath],
+    message: `"${exportKey}" can't be exported: "${word}" is a reserved word in JavaScript. ${RENAME_HINT}`,
+  };
+}
+
+/**
+ * Flags an export key that does not start with an ASCII letter.
+ *
+ * The Firebase CLI (as of v15.34.1) rejects function IDs that don't start with
+ * a letter, and the top-level name must be a valid identifier. Firebase joins
+ * group segments with hyphens to form the ID, so only the first character is
+ * constrained: nested segments may start with a digit (`v2.2fa` deploys as
+ * `v2-2fa`).
+ *
+ * @see https://github.com/firebase/firebase-tools/blob/v15.34.1/src/deploy/functions/validate.ts#L349-L359
+ * @see https://github.com/firebase/firebase-functions/blob/v7.4.0/src/runtime/loader.ts#L95
+ */
+function checkLeadingLetter({ exportKey, filePath }: ParsedFunction): ValidationIssue | null {
+  if (/^[a-z]/i.test(exportKey)) return null;
+  return {
+    type: 'leading-non-letter',
+    exportKey,
+    filePaths: [filePath],
+    message: `"${exportKey}" must start with a letter. ${RENAME_HINT}`,
+  };
+}
+
+/**
+ * Flags an export key with an empty segment or a character other than an ASCII
+ * letter or digit.
+ *
+ * The Firebase CLI (as of v15.34.1) allows ASCII letters, digits, `_` and `-`
+ * in a function ID. This is stricter: the runtime turns hyphens in the target
+ * name back into dots and accepts only `[a-z0-9]+(\.[a-z0-9]+)*` (see
+ * `getInstanceTargetId()`), so `_` and empty segments would fail at cold
+ * start. `camelCase` already strips `_` and `-` from file and folder names, so
+ * in practice this catches non-ASCII letters and segments that camelCase to
+ * nothing (e.g. a folder named `_`).
+ *
+ * @see https://github.com/firebase/firebase-tools/blob/v15.34.1/src/deploy/functions/validate.ts#L349-L359
+ */
+function checkCharacters({ exportKey, filePath }: ParsedFunction): ValidationIssue | null {
+  if (/^[a-z0-9]+(\.[a-z0-9]+)*$/i.test(exportKey)) return null;
+  return {
+    type: 'invalid-characters',
+    exportKey,
+    filePaths: [filePath],
+    message:
+      `"${exportKey}" contains characters that can't be used in a function name. ` +
+      'Each dot-separated segment must be non-empty and use only ASCII letters and digits.',
   };
 }
 

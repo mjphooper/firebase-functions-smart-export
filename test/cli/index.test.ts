@@ -231,6 +231,48 @@ describe('cli main()', () => {
     expect(generatedIndexExists()).to.equal(false);
   });
 
+  it('returns 1 and names the file when a top-level group is a reserved word', async () => {
+    // Arrange
+    writeFunctionFile('delete/thing.function.js');
+    const errorStub = sinon.stub(styledConsoleOutput, 'error');
+
+    // Act
+    const code = await main({ cwd: projectRoot });
+
+    // Assert
+    expect(code).to.equal(1);
+    expect(errorStub).to.have.been.calledWithMatch(/"delete" is a reserved word/);
+    expect(errorStub).to.have.been.calledWithMatch(/delete\/thing\.function\.js/);
+    expect(generatedIndexExists()).to.equal(false);
+  });
+
+  it('returns 1 and names the file when a top-level group starts with a digit', async () => {
+    // Arrange
+    writeFunctionFile('2fa/verify.function.js');
+    const errorStub = sinon.stub(styledConsoleOutput, 'error');
+
+    // Act
+    const code = await main({ cwd: projectRoot });
+
+    // Assert
+    expect(code).to.equal(1);
+    expect(errorStub).to.have.been.calledWithMatch(/must start with a letter/);
+    expect(errorStub).to.have.been.calledWithMatch(/2fa\/verify\.function\.js/);
+    expect(generatedIndexExists()).to.equal(false);
+  });
+
+  it('exports a top-level group whose name ends in a digit', async () => {
+    // Arrange
+    writeFunctionFile('v2/thing.function.js');
+
+    // Act
+    const code = await main({ cwd: projectRoot });
+
+    // Assert
+    expect(code).to.equal(0);
+    expect(readGeneratedIndex()).to.contain('export const v2 = exportMap.v2;');
+  });
+
   it('returns 1 without reporting success when a dry run finds validation errors', async () => {
     // Arrange
     writeFunctionFile(`${'a'.repeat(63)}.function.js`);

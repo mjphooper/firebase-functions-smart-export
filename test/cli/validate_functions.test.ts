@@ -14,7 +14,7 @@ const OVERSIZED_KEY = 'x'.repeat(FUNCTION_NAME_CHARACTER_LIMIT + 1);
 describe('validateFunctions()', () => {
   it('returns no issues when every function is valid', () => {
     // Arrange
-    const functions = [makeParsedFunction('foo'), makeParsedFunction('auth.bar')];
+    const functions = [makeParsedFunction('foo'), makeParsedFunction('auth.bar'), makeParsedFunction('v2.thing')];
 
     // Act
     const issues = validateFunctions(functions);
@@ -134,22 +134,144 @@ describe('validateFunctions()', () => {
     });
   });
 
+  describe('reserved words', () => {
+    it('flags a reserved top-level name, naming the word and how to fix it', () => {
+      // Arrange
+      const reserved = makeParsedFunction('delete.thing', 'delete/thing.function.js');
+
+      // Act
+      const issues = validateFunctions([reserved]);
+
+      // Assert
+      expect(issues).to.have.lengthOf(1);
+      expect(issues[0]).to.deep.include({
+        type: 'reserved-word',
+        exportKey: 'delete.thing',
+        word: 'delete',
+        filePaths: ['delete/thing.function.js'],
+      });
+      expect(issues[0].message).to.contain('"delete.thing" can\'t be exported');
+      expect(issues[0].message).to.contain('"delete" is a reserved word in JavaScript');
+      expect(issues[0].message).to.contain('"ffse.config.js"');
+    });
+
+    it('flags strict-mode, module-only, literal and strict-binding words', () => {
+      // Arrange
+      const functions = ['package.publish', 'await', 'null.check', 'eval.run'].map(key => makeParsedFunction(key));
+
+      // Act
+      const issues = validateFunctions(functions);
+
+      // Assert
+      expect(issues.map(issue => issue.type === 'reserved-word' && issue.word)).to.deep.equal([
+        'package',
+        'await',
+        'null',
+        'eval',
+      ]);
+    });
+
+    it('accepts reserved words in nested segments', () => {
+      // Act
+      const issues = validateFunctions([makeParsedFunction('users.delete'), makeParsedFunction('v2.class.new')]);
+
+      // Assert
+      expect(issues).to.deep.equal([]);
+    });
+
+    it('accepts names that only contain a reserved word', () => {
+      // Act
+      const issues = validateFunctions([makeParsedFunction('deleteUser'), makeParsedFunction('classes')]);
+
+      // Assert
+      expect(issues).to.deep.equal([]);
+    });
+  });
+
+  describe('leading character', () => {
+    it('flags a name that starts with a digit', () => {
+      // Arrange
+      const leadingDigit = makeParsedFunction('2fa.verify', '2fa/verify.function.js');
+
+      // Act
+      const issues = validateFunctions([leadingDigit]);
+
+      // Assert
+      expect(issues).to.have.lengthOf(1);
+      expect(issues[0]).to.deep.include({
+        type: 'leading-non-letter',
+        exportKey: '2fa.verify',
+        filePaths: ['2fa/verify.function.js'],
+      });
+      expect(issues[0].message).to.contain('"2fa.verify" must start with a letter');
+      expect(issues[0].message).to.contain('"ffse.config.js"');
+    });
+
+    it('accepts nested segments that start with a digit and names that start with a capital', () => {
+      // Act
+      const issues = validateFunctions([makeParsedFunction('v2.2fa'), makeParsedFunction('Auth.x')]);
+
+      // Assert
+      expect(issues).to.deep.equal([]);
+    });
+  });
+
+  describe('allowed characters', () => {
+    it('flags non-ASCII letters in any segment, saying what is allowed', () => {
+      // Arrange
+      const accented = makeParsedFunction('café.order', 'café/order.function.js');
+      const cjk = makeParsedFunction('orders.日本', 'orders/日本.function.js');
+
+      // Act
+      const issues = validateFunctions([accented, cjk]);
+
+      // Assert
+      expect(issues.map(issue => issue.type)).to.deep.equal(['invalid-characters', 'invalid-characters']);
+      expect(issues.map(issue => issue.filePaths)).to.deep.equal([
+        ['café/order.function.js'],
+        ['orders/日本.function.js'],
+      ]);
+      expect(issues[0].message).to.contain('"café.order" contains characters that can\'t be used in a function name');
+      expect(issues[0].message).to.contain('only ASCII letters and digits');
+    });
+
+    it('flags an empty segment in the middle or at the end', () => {
+      // Act
+      const issues = validateFunctions([makeParsedFunction('a..foo'), makeParsedFunction('a.')]);
+
+      // Assert
+      expect(issues.map(issue => issue.type)).to.deep.equal(['invalid-characters', 'invalid-characters']);
+    });
+
+    it('accepts ASCII letters and digits in every segment', () => {
+      // Act
+      const issues = validateFunctions([makeParsedFunction('v2.sendMessage2'), makeParsedFunction('a')]);
+
+      // Assert
+      expect(issues).to.deep.equal([]);
+    });
+  });
+
   describe('reporting', () => {
-    it('reports per-function issues first, then collisions', () => {
+    it('reports per-function issues in check order, then collisions', () => {
       // Arrange
       const longA = makeParsedFunction(OVERSIZED_KEY, 'longA.function.js');
       const longB = makeParsedFunction(`y${OVERSIZED_KEY}`, 'longB.function.js');
       const dupA = makeParsedFunction('foo', 'auth/foo.function.js');
       const dupB = makeParsedFunction('foo', 'chats/foo.function.js');
+      const reserved = makeParsedFunction('delete.thing', 'delete/thing.function.js');
+      const leadingDigit = makeParsedFunction('2fa.verify', '2fa/verify.function.js');
 
       // Act
-      const issues = validateFunctions([longA, dupA, longB, dupB]);
+      const issues = validateFunctions([longA, reserved, dupA, longB, leadingDigit, dupB]);
 
       // Assert
-      expect(issues.map(issue => issue.filePaths)).to.deep.equal([
-        ['longA.function.js'],
-        ['longB.function.js'],
-        ['auth/foo.function.js', 'chats/foo.function.js'],
+      expect(issues.map(issue => issue.type)).to.deep.equal([
+        'too-long',
+        'too-long',
+        'reserved-word',
+        'leading-non-letter',
+        'duplicate-names',
       ]);
     });
 
@@ -165,5 +287,12 @@ describe('validateFunctions()', () => {
       expect(issues.map(issue => issue.type)).to.deep.equal(['too-long', 'too-long', 'duplicate-names']);
     });
 
+    it('reports every rule a single function breaks', () => {
+      // Act
+      const issues = validateFunctions([makeParsedFunction('.verify', '_/verify.function.js')]);
+
+      // Assert
+      expect(issues.map(issue => issue.type)).to.deep.equal(['leading-non-letter', 'invalid-characters']);
+    });
   });
 });
