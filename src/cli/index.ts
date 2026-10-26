@@ -56,10 +56,10 @@ export async function main({
 
     const functions = files.map(file => parseFunctionFile(file, config));
 
-    const errors = validateFunctions(functions);
-    if (errors.length > 0) {
-      const entries = errors.map(error => `- ${error.message}\n${indentString(error.filePaths.join('\n'), 4)}`);
-      styledConsoleOutput.error(`Found ${errors.length} problem(s) with your functions:\n\n${indentString(entries.join('\n'), 2)}`);
+    const issues = validateFunctions(functions);
+    if (issues.length > 0) {
+      const entries = issues.map(issue => `- ${issue.message}\n${indentString(issue.filePaths.join('\n'), 4)}`);
+      styledConsoleOutput.error(`Found ${issues.length} problem(s) with your functions:\n\n${indentString(entries.join('\n'), 2)}`);
       return 1;
     }
 
