@@ -209,6 +209,23 @@ describe('cli main()', () => {
     expect(generatedIndexExists()).to.equal(false);
   });
 
+  it('returns 1 and names both files when a function shares its name with a group', async () => {
+    // Arrange
+    writeFunctionFile('posts.function.js');
+    writeFunctionFile('posts/create.function.js');
+    const errorStub = sinon.stub(styledConsoleOutput, 'error');
+
+    // Act
+    const code = await main({ cwd: projectRoot });
+
+    // Assert
+    expect(code).to.equal(1);
+    expect(errorStub).to.have.been.calledWithMatch(/"posts" is both a function and a group/);
+    expect(errorStub).to.have.been.calledWithMatch(/posts\.function\.js/);
+    expect(errorStub).to.have.been.calledWithMatch(/posts\/create\.function\.js/);
+    expect(generatedIndexExists()).to.equal(false);
+  });
+
   it('returns 1 and reports every problem in one error when several checks fail', async () => {
     // Arrange
     writeFunctionFile(`${'a'.repeat(63)}.function.js`);
