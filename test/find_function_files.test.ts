@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import fs from 'fs';
 import path from 'path';
-import { DEFAULT_MATCH_EXTENSION } from '../../src/cli/config.js';
-import { findFunctionFiles } from '../../src/cli/find_function_files.js';
-import { useSandbox } from '../helpers/sandbox.js';
+import { DEFAULT_MATCH_EXTENSION } from '../src/config.js';
+import { findFunctionFiles } from '../src/find_function_files.js';
+import { useSandbox } from './helpers/sandbox.js';
 
 describe('findFunctionFiles()', () => {
   const sandbox = useSandbox();

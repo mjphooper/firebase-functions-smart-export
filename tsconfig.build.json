@@ -4,10 +4,10 @@
   "compilerOptions": {
     "noEmit": false,
     "outDir": "lib",
-    "rootDir": "./src/cli"
+    "rootDir": "./src"
   },
   "include": [
-    "src/cli"
+    "src"
   ],
   "exclude": [
     "node_modules",

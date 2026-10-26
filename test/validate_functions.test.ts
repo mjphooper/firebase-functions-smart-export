@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import type { ParsedFunction } from '../../src/cli/parse_function_files.js';
-import { FUNCTION_NAME_CHARACTER_LIMIT, validateFunctions } from '../../src/cli/validate_functions.js';
+import type { ParsedFunction } from '../src/parse_function_files.js';
+import { FUNCTION_NAME_CHARACTER_LIMIT, validateFunctions } from '../src/validate_functions.js';
 
 /** Builds a `ParsedFunction`; `filePath` defaults to `<exportKey>.function.js`. */
 const makeParsedFunction = (

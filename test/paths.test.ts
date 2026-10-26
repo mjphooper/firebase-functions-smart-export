@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import fs from 'fs';
 import path from 'path';
-import { DEFAULT_OUT_DIR, DEFAULT_SOURCE_DIR } from '../../src/cli/config.js';
-import { getAbsSourceDirPath } from '../../src/cli/paths.js';
-import { useSandbox } from '../helpers/sandbox.js';
+import { DEFAULT_OUT_DIR, DEFAULT_SOURCE_DIR } from '../src/config.js';
+import { getAbsSourceDirPath } from '../src/paths.js';
+import { useSandbox } from './helpers/sandbox.js';
 
 describe('getAbsSourceDirPath()', () => {
   const sandbox = useSandbox();
