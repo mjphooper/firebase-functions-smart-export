@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { buildExportTree } from '../../src/cli/build_export_tree.js';
-import type { ParsedFunction } from '../../src/cli/parse_function_files.js';
+import { buildExportTree } from '../src/build_export_tree.js';
+import type { ParsedFunction } from '../src/parse_function_files.js';
 
 function makeFunctions(...exportKeys: string[]): ParsedFunction[] {
   return exportKeys.map(exportKey => ({ exportKey, filePath: `${exportKey}.function.js` }));

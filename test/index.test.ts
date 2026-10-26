@@ -3,11 +3,11 @@ import fs from 'fs';
 import { dirname, join, resolve } from 'path';
 import sinon from 'sinon';
 import { pathToFileURL } from 'url';
-import type { Config } from '../../src/cli/config.js';
-import { GENERATED_INDEX_FILE_NAME } from '../../src/cli/generate_index_file.js';
-import { main } from '../../src/cli/index.js';
-import { styledConsoleOutput } from '../../src/cli/styled_console_log.js';
-import { useSandbox } from '../helpers/sandbox.js';
+import type { Config } from '../src/config.js';
+import { GENERATED_INDEX_FILE_NAME } from '../src/generate_index_file.js';
+import { main } from '../src/index.js';
+import { styledConsoleOutput } from '../src/styled_console_log.js';
+import { useSandbox } from './helpers/sandbox.js';
 
 /** Dynamically imports the generated index file and returns its module namespace. */
 async function importGeneratedIndex(projectRoot: string, sourceDir = 'src'): Promise<Record<string, unknown>> {

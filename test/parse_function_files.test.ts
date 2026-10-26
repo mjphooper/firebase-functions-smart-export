@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { parseFunctionFile } from '../../src/cli/parse_function_files.js';
-import type { Config } from '../../src/cli/config.js';
+import { parseFunctionFile } from '../src/parse_function_files.js';
+import type { Config } from '../src/config.js';
 
 describe('parseFunctionFile()', () => {
   const emptyConfig: Config = {};

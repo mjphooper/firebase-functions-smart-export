@@ -2,11 +2,11 @@ import { expect } from 'chai';
 import fs from 'fs';
 import { dirname, resolve } from 'path';
 import { pathToFileURL } from 'url';
-import { buildExportTree } from '../../../src/cli/build_export_tree.js';
-import { GENERATED_INDEX_FILE_NAME, generateIndexFile } from '../../../src/cli/generate_index_file.js';
-import type { ParsedFunction } from '../../../src/cli/parse_function_files.js';
-import type { Config } from '../../../src/cli/config.js';
-import { useSandbox } from '../../helpers/sandbox.js';
+import { buildExportTree } from '../src/build_export_tree.js';
+import { GENERATED_INDEX_FILE_NAME, generateIndexFile } from '../src/generate_index_file.js';
+import type { ParsedFunction } from '../src/parse_function_files.js';
+import type { Config } from '../src/config.js';
+import { useSandbox } from './helpers/sandbox.js';
 
 declare global {
   // Export keys of the function modules imported by the generated index, in load order.
