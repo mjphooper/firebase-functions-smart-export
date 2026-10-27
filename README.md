@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/mjphooper/firebase-functions-smart-export/actions/workflows/ci.yml/badge.svg)](https://github.com/mjphooper/firebase-functions-smart-export/actions/workflows/ci.yml)
 
-Firebase Functions Smart Export (FFSE) is a dynamic function exporter that streamlines function exporting and aims to improve cold start times. FFSE is a [pure ESM package](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c).
+Firebase Functions Smart Export (FFSE) is a dynamic function exporter that streamlines function exporting and aims to improve cold start times. FFSE is ESM-only: your functions project must be an ES module, with `"type": "module"` in its `package.json`. CommonJS projects aren't supported.
 
 > **Status:** This package is primarily maintained as internal tooling and a portfolio piece. If you're looking for a more battle-tested option, [better-firebase-functions](https://www.npmjs.com/package/better-firebase-functions) now supports ESM via `exportFunctionsAsync` and is likely the right choice for most projects. See [Comparison](#comparison) below.
 
@@ -11,7 +11,7 @@ Firebase Functions Smart Export (FFSE) is a dynamic function exporter that strea
 - ✨ **Zero-boilerplate exports** — Functions are automatically discovered, grouped, and exported based on file structure.
 - ⚡ **Faster cold starts** — Only the dependencies of the invoked function are loaded at runtime, rather than your entire codebase.
 - 🛠️ **Build-time codegen** — A static function map is written to disk; no runtime filesystem scanning.
-- 📦 **ESM native** — Built from the ground up for modern ES modules.
+- 📦 **Built for ESM**
 
 ## Motivation
 
@@ -45,7 +45,14 @@ If you'd rather not have a build step at all, use BFF.
 npm install firebase-functions-smart-export
 ```
 
-2. Ensure your functions are the default exports of files with the `.function.js` (or `.ts`) extension. For more information, see [Exporting functions](#exporting-functions).
+2. FFSE is ESM-only, so your functions `package.json` must set `"type": "module"`. The templates from `firebase init` don't set it, and `ffse` stops with an error until you do. If your project uses `require()`, see [how to move a CommonJS project to ESM](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c).
+```json
+{
+  "type": "module"
+}
+```
+
+3. Ensure your functions are the default exports of files with the `.function.js` (or `.ts`) extension. For more information, see [Exporting functions](#exporting-functions).
 ```javascript
 // some/path/my_function_name.function.js
 import { onCall } from 'firebase-functions/v2/https';
@@ -53,19 +60,19 @@ import { onCall } from 'firebase-functions/v2/https';
 export default onCall({...});
 ```
 
-3. Run the CLI tool (and every time you modify your functions) to generate your exports.
+4. Run the CLI tool (and every time you modify your functions) to generate your exports.
 ```bash
 npx ffse
 ```
 > Consider adding `cd path/to/functions && npx ffse` to the "functions" pre-deployment script in `firebase.json` to automate this process.
 
 
-4. Replace the contents of your `lib/index.js` (or `src/index.ts`) with the line below. Keep the `.js` extension in TypeScript too: under `nodenext`, imports name the compiled file.
+5. Replace the contents of your `lib/index.js` (or `src/index.ts`) with the line below. Keep the `.js` extension in TypeScript too: under `nodenext`, imports name the compiled file.
 ```javascript
 export * from './index.gen.js';
 ```
 
-5. You can now deploy your functions as normal!
+6. You can now deploy your functions as normal!
 ```bash
 firebase deploy --only functions
 ```
@@ -134,6 +141,8 @@ FFSE ships with TypeScript definitions and works straight out of the box in Type
 When your source directory holds `index.ts`, FFSE writes `index.gen.ts`, which `tsc` compiles like any other source file. It needs no `allowJs` or `@types/node`, and it compiles with the `tsconfig.json` from `firebase init`. Each export keeps the type of its function, or is `undefined` on instances serving a different function.
 
 If some of your function files are `.js` in a TypeScript project, set `allowJs: true` so `tsc` copies them into your output directory.
+
+FFSE generates ES modules only, so your functions `package.json` must set `"type": "module"`, and `ffse` checks for it. Without it, a JavaScript project still deploys, but the Cloud Functions runtime loads your code with `require()` and every function fails at cold start. In a TypeScript project, `tsc` compiles to CommonJS and rejects the generated index's top-level `await`.
 
 
 ## Limitations

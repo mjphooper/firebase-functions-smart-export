@@ -386,6 +386,21 @@ describe('cli main()', () => {
     expect(generatedIndexExists('src', 'js')).to.equal(false);
   });
 
+  it('returns 1 without writing the index when package.json does not set "type": "module"', async () => {
+    // Arrange
+    writePackageJson({ main: 'lib/index.js' });
+    writeFunctionFile('hello.function.js');
+    const errorStub = sinon.stub(styledConsoleOutput, 'error');
+
+    // Act
+    const code = await main({ cwd: projectRoot });
+
+    // Assert
+    expect(code).to.equal(1);
+    expect(errorStub).to.have.been.calledWithMatch(/package\.json must set "type": "module"/);
+    expect(generatedIndexExists()).to.equal(false);
+  });
+
   describe('given a TypeScript project with the firebase init tsconfig', () => {
     beforeEach(() => {
       fs.rmSync(join(projectRoot, 'src', 'index.js'));

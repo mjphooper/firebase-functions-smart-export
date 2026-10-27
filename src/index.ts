@@ -2,6 +2,7 @@ import indentString from 'indent-string';
 import { buildExportTree } from './build_export_tree.js';
 import { DEFAULT_MATCH_EXTENSION, DEFAULT_SOURCE_DIR } from './config.js';
 import { getConfig } from './config_loader.js';
+import { isEsmPackage } from './esm_package.js';
 import { detectProjectLanguage } from './project_language.js';
 import { findFunctionFiles } from './find_function_files.js';
 import { generateIndexFile } from './generate_index_file.js';
@@ -28,6 +29,13 @@ export async function main({
 
     if ('outDir' in config) {
       styledConsoleOutput.error('`outDir` is no longer supported. Remove it from ffse.config.js: index.gen.js now imports functions relative to itself.');
+      return 1;
+    }
+
+    if (!isEsmPackage(cwd)) {
+      styledConsoleOutput.error(
+        'package.json must set "type": "module". FFSE generates an ES module, and without it Cloud Functions loads your code with require(), so every function fails at cold start.'
+      );
       return 1;
     }
 
