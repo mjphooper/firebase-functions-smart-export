@@ -2,6 +2,7 @@ import indentString from 'indent-string';
 import { buildExportTree } from './build_export_tree.js';
 import { DEFAULT_MATCH_EXTENSION, DEFAULT_SOURCE_DIR } from './config.js';
 import { getConfig } from './config_loader.js';
+import { detectProjectLanguage } from './project_language.js';
 import { findFunctionFiles } from './find_function_files.js';
 import { generateIndexFile } from './generate_index_file.js';
 import { parseFunctionFile } from './parse_function_files.js';
@@ -33,6 +34,8 @@ export async function main({
     const absSourcePath = getAbsSourceDirPath(cwd, config.sourceDir);
     styledConsoleOutput.info(`Resolved source code path to: ${absSourcePath}`);
 
+    const language = detectProjectLanguage(absSourcePath);
+
     if (verbose) {
       const sourceDir = config.sourceDir ?? DEFAULT_SOURCE_DIR;
       const matchExtension = config.matchExtension ?? DEFAULT_MATCH_EXTENSION;
@@ -41,7 +44,7 @@ export async function main({
 
     const { files, hasMixedFileTypes } = findFunctionFiles(absSourcePath, config.matchExtension);
 
-    if (hasMixedFileTypes) {
+    if (language === 'ts' && hasMixedFileTypes) {
       styledConsoleOutput.warn(
         'Found both .ts and .js function files. Set `allowJs: true` in tsconfig.json to include .js files in compilation.'
       );
@@ -78,7 +81,7 @@ export async function main({
     }
 
     const exportTree = buildExportTree(functions);
-    await generateIndexFile(absSourcePath, functions, exportTree, config);
+    await generateIndexFile(absSourcePath, functions, exportTree, config, language);
 
     const timing = verbose ? ` in ${Math.round(performance.now() - startTime)}ms` : '';
     styledConsoleOutput.success(`[ffse] ✅ Success! Exported ${functionCount} function(s)${timing}`);

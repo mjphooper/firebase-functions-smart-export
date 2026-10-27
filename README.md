@@ -60,7 +60,7 @@ npx ffse
 > Consider adding `cd path/to/functions && npx ffse` to the "functions" pre-deployment script in `firebase.json` to automate this process.
 
 
-4. Replace the contents of your `lib/index.js` (or `src/index.ts`) with:
+4. Replace the contents of your `lib/index.js` (or `src/index.ts`) with the line below. Keep the `.js` extension in TypeScript too: under `nodenext`, imports name the compiled file.
 ```javascript
 export * from './index.gen.js';
 ```
@@ -75,7 +75,7 @@ firebase deploy --only functions
   
 🔍   **1.** At build time, the CLI searches your source directory for files matching `**/*.function.js` or `**/*.function.ts` (the `function` part is configurable via `matchExtension`). Each file's default export becomes a function, named after its path. To learn more, see [Exporting functions](#exporting-functions).
 
-🛠️ **2.**  An `index.gen.js` file is generated in your source directory (auto-detected or configured via `sourceDir`). It contains a literal `import()` for every function, relative to the generated file, and nests them into named exports matching your function groups. It has no dependency on this package at runtime.
+🛠️ **2.**  An index file is generated in your source directory (auto-detected or configured via `sourceDir`): `index.gen.ts` if the directory holds `index.ts`, otherwise `index.gen.js`. It contains a literal `import()` for every function, relative to the generated file, and nests them into named exports matching your function groups. It has no dependency on this package at runtime.
 
 ⚡️**3.**  At runtime, `index.gen.js` checks which function the instance is serving (via `FUNCTION_TARGET` or `K_SERVICE`). Only that function's module is imported, avoiding the overhead of loading unused dependencies. When no target is set (e.g. during deploy discovery), every function is imported in parallel. If the target isn't in the generated file, it throws an error asking you to rerun `ffse`.
   
@@ -129,9 +129,11 @@ export default defineConfig({
 ```
 
 ## TypeScript and ESM
-FFSE ships with TypeScript definitions and works straight out of the box in TypeScript projects. By default, FFSE uses `src/` as the source directory; configure `sourceDir` in your `ffse.config.js` if yours differs. The compiled output can live anywhere, as `index.gen.js` imports your functions relative to itself.
+FFSE ships with TypeScript definitions and works straight out of the box in TypeScript projects. By default, FFSE uses `src/` as the source directory; configure `sourceDir` in your `ffse.config.js` if yours differs. The compiled output can live anywhere, as the generated index imports your functions relative to itself.
 
-`index.gen.js` is a JavaScript file written into your source directory, so set `allowJs: true` in your `tsconfig.json` for `tsc` to copy it into your output directory.
+When your source directory holds `index.ts`, FFSE writes `index.gen.ts`, which `tsc` compiles like any other source file. It needs no `allowJs` or `@types/node`, and it compiles with the `tsconfig.json` from `firebase init`. Each export keeps the type of its function, or is `undefined` on instances serving a different function.
+
+If some of your function files are `.js` in a TypeScript project, set `allowJs: true` so `tsc` copies them into your output directory.
 
 
 ## Limitations

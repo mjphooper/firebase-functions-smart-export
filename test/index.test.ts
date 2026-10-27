@@ -1,17 +1,36 @@
 import { expect } from 'chai';
+import { spawnSync } from 'child_process';
 import fs from 'fs';
+import { createRequire } from 'module';
 import { dirname, join, resolve } from 'path';
 import sinon from 'sinon';
 import { pathToFileURL } from 'url';
 import type { Config } from '../src/config.js';
-import { GENERATED_INDEX_FILE_NAME } from '../src/generate_index_file.js';
+import type { ProjectLanguage } from '../src/project_language.js';
+import { getGeneratedIndexFileName } from '../src/generate_index_file.js';
 import { main } from '../src/index.js';
 import { styledConsoleOutput } from '../src/styled_console_log.js';
 import { useSandbox } from './helpers/sandbox.js';
 
+/** The compiler options from the `firebase init` TypeScript template (firebase-tools 15.28.2). */
+const FIREBASE_TEMPLATE_COMPILER_OPTIONS = {
+  module: 'NodeNext',
+  esModuleInterop: true,
+  moduleResolution: 'nodenext',
+  noImplicitReturns: true,
+  noUnusedLocals: true,
+  outDir: 'lib',
+  rootDir: 'src',
+  sourceMap: true,
+  strict: true,
+  target: 'es2017',
+};
+
+const TSC_PATH = createRequire(import.meta.url).resolve('typescript/bin/tsc');
+
 /** Dynamically imports the generated index file and returns its module namespace. */
 async function importGeneratedIndex(projectRoot: string, sourceDir = 'src'): Promise<Record<string, unknown>> {
-  return import(pathToFileURL(resolve(projectRoot, sourceDir, GENERATED_INDEX_FILE_NAME)).href);
+  return import(pathToFileURL(resolve(projectRoot, sourceDir, getGeneratedIndexFileName('js'))).href);
 }
 
 describe('cli main()', () => {
@@ -25,6 +44,18 @@ describe('cli main()', () => {
     fs.writeFileSync(full, contents);
   }
 
+  /** Writes `<projectRoot>/<sourceDir>/index.<language>`, re-exporting the generated index. */
+  function writeIndexFile(sourceDir = 'src', language: ProjectLanguage = 'js'): void {
+    const full = resolve(projectRoot, sourceDir, `index.${language}`);
+    fs.mkdirSync(dirname(full), { recursive: true });
+    fs.writeFileSync(full, `export * from './index.gen.js';\n`);
+  }
+
+  /** Writes a `package.json` at the project root with the given fields. */
+  function writePackageJson(fields: Record<string, unknown>): void {
+    fs.writeFileSync(resolve(projectRoot, 'package.json'), JSON.stringify(fields));
+  }
+
   /** Writes an `ffse.config.js` at the project root with the given config as its default export. */
   function writeConfigFile(config: Config): void {
     const filePath = resolve(projectRoot, 'ffse.config.js');
@@ -32,23 +63,24 @@ describe('cli main()', () => {
   }
 
   /** Absolute path where the generated index file is expected to land. */
-  function indexPath(sourceDir = 'src'): string {
-    return resolve(projectRoot, sourceDir, GENERATED_INDEX_FILE_NAME);
+  function indexPath(sourceDir = 'src', language: ProjectLanguage = 'js'): string {
+    return resolve(projectRoot, sourceDir, getGeneratedIndexFileName(language));
   }
 
   /** Reads the generated index file's contents. Throws if it doesn't exist. */
-  function readGeneratedIndex(sourceDir = 'src'): string {
-    return fs.readFileSync(indexPath(sourceDir), 'utf8');
+  function readGeneratedIndex(sourceDir = 'src', language: ProjectLanguage = 'js'): string {
+    return fs.readFileSync(indexPath(sourceDir, language), 'utf8');
   }
 
   /** Whether the generated index file exists on disk. */
-  function generatedIndexExists(sourceDir = 'src'): boolean {
-    return fs.existsSync(indexPath(sourceDir));
+  function generatedIndexExists(sourceDir = 'src', language: ProjectLanguage = 'js'): boolean {
+    return fs.existsSync(indexPath(sourceDir, language));
   }
 
   beforeEach(() => {
     projectRoot = sandbox.path();
-    fs.mkdirSync(join(projectRoot, 'src'), { recursive: true });
+    writeIndexFile();
+    writePackageJson({ type: 'module' });
   });
 
   afterEach(() => {
@@ -126,6 +158,7 @@ describe('cli main()', () => {
     it('honours sourceDir and useSingleQuotes', async () => {
       // Arrange
       writeFunctionFile('foo.function.js', 'app');
+      writeIndexFile('app');
       writeConfigFile({ sourceDir: 'app', useSingleQuotes: true });
 
       // Act
@@ -290,7 +323,26 @@ describe('cli main()', () => {
     sinon.assert.notCalled(successStub);
   });
 
-  it('generates the index and warns about allowJs when given mixed .ts and .js function files', async () => {
+  it('generates the index and warns about allowJs when a TypeScript project has .js function files', async () => {
+    // Arrange
+    fs.rmSync(join(projectRoot, 'src', 'index.js'));
+    writeIndexFile('src', 'ts');
+    writeFunctionFile('foo.function.ts');
+    writeFunctionFile('bar.function.js');
+    const warnStub = sinon.stub(styledConsoleOutput, 'warn');
+
+    // Act
+    const code = await main({ cwd: projectRoot });
+
+    // Assert
+    expect(code).to.equal(0);
+    const content = readGeneratedIndex('src', 'ts');
+    expect(content).to.contain('import("./foo.function.js")');
+    expect(content).to.contain('import("./bar.function.js")');
+    expect(warnStub).to.have.been.calledWithMatch(/allowJs/);
+  });
+
+  it('does not warn about allowJs when a JavaScript project has mixed function files', async () => {
     // Arrange
     writeFunctionFile('foo.function.ts');
     writeFunctionFile('bar.function.js');
@@ -301,10 +353,91 @@ describe('cli main()', () => {
 
     // Assert
     expect(code).to.equal(0);
-    const content = readGeneratedIndex();
-    expect(content).to.contain('import("./foo.function.js")');
-    expect(content).to.contain('import("./bar.function.js")');
-    expect(warnStub).to.have.been.calledWithMatch(/allowJs/);
+    expect(warnStub).to.not.have.been.calledWithMatch(/allowJs/);
+  });
+
+  it('returns 1 without writing the index when the source directory has no index file', async () => {
+    // Arrange
+    fs.rmSync(join(projectRoot, 'src', 'index.js'));
+    writeFunctionFile('hello.function.js');
+    const errorStub = sinon.stub(styledConsoleOutput, 'error');
+
+    // Act
+    const code = await main({ cwd: projectRoot });
+
+    // Assert
+    expect(code).to.equal(1);
+    expect(errorStub).to.have.been.calledWithMatch(/Could not find index\.ts or index\.js/);
+    expect(generatedIndexExists()).to.equal(false);
+  });
+
+  it('writes index.gen.ts when the source directory holds index.ts', async () => {
+    // Arrange
+    fs.rmSync(join(projectRoot, 'src', 'index.js'));
+    writeIndexFile('src', 'ts');
+    writeFunctionFile('hello.function.ts');
+
+    // Act
+    const code = await main({ cwd: projectRoot });
+
+    // Assert
+    expect(code).to.equal(0);
+    expect(generatedIndexExists('src', 'ts')).to.equal(true);
+    expect(generatedIndexExists('src', 'js')).to.equal(false);
+  });
+
+  describe('given a TypeScript project with the firebase init tsconfig', () => {
+    beforeEach(() => {
+      fs.rmSync(join(projectRoot, 'src', 'index.js'));
+      writeIndexFile('src', 'ts');
+      // `types: []` keeps this repo's own @types packages out of the sandbox,
+      // which also shows the generated file needs no @types/node.
+      const tsconfig = { compilerOptions: { ...FIREBASE_TEMPLATE_COMPILER_OPTIONS, types: [] as string[] }, include: ['src'] };
+      fs.writeFileSync(resolve(projectRoot, 'tsconfig.json'), JSON.stringify(tsconfig));
+    });
+
+    /** Runs this repo's `tsc` against the sandbox project. */
+    function compile() {
+      return spawnSync(process.execPath, [TSC_PATH, '-p', projectRoot], { encoding: 'utf8' });
+    }
+
+    it('compiles the generated index without allowJs, and the output runs', async function () {
+      this.timeout(30_000);
+
+      // Arrange
+      writeFunctionFile('posts/create.function.ts', 'src', 'export default (name: string): string => `created ${name}`;\n');
+      writeFunctionFile('hello.function.ts', 'src', `export default { id: 'hello' };\n`);
+
+      // Act
+      const code = await main({ cwd: projectRoot });
+      const result = compile();
+
+      // Assert
+      expect(code).to.equal(0);
+      expect(result.stdout).to.equal('');
+      expect(result.status).to.equal(0);
+      const indexModule = await import(pathToFileURL(resolve(projectRoot, 'lib', 'index.js')).href);
+      expect(indexModule.posts.create('post')).to.equal('created post');
+      expect(indexModule.hello).to.deep.equal({ id: 'hello' });
+    });
+
+    it('keeps each function\'s type on its export', async function () {
+      this.timeout(30_000);
+
+      // Arrange
+      writeFunctionFile('hello.function.ts', 'src', `export default { id: 'hello' };\n`);
+      fs.writeFileSync(
+        resolve(projectRoot, 'src', 'uses_hello.ts'),
+        `import { hello } from './index.gen.js';\nexport const id: number | undefined = hello?.id;\n`,
+      );
+
+      // Act
+      await main({ cwd: projectRoot });
+      const result = compile();
+
+      // Assert
+      expect(result.stdout).to.match(/uses_hello\.ts.*error TS2322: Type 'string \| undefined' is not assignable to type 'number \| undefined'/);
+    });
   });
 
   it('returns 0 without writing the index file when dryRun is true', async () => {
@@ -339,6 +472,7 @@ describe('cli main()', () => {
     // Arrange
     fs.rmSync(join(projectRoot, 'src'), { recursive: true });
     writeFunctionFile('hello.function.js', 'lib');
+    writeIndexFile('lib');
 
     // Act
     const code = await main({ cwd: projectRoot });
