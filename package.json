@@ -1,6 +1,6 @@
 {
   "name": "firebase-functions-smart-export",
-  "description": "Smart, dynamic exporting to speed up Firebase Functions. Fully ESM compatible",
+  "description": "Smart, dynamic exporting to speed up Firebase Functions in ES module projects",
   "author": "Matt Hooper <email goes here> (matthooper.dev)",
   "version": "0.0.0",
   "private": true,
