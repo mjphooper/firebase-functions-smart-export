@@ -2,10 +2,13 @@ import fs from 'node:fs';
 import { join } from 'node:path';
 import type { ExportTree } from './build_export_tree.js';
 import type { Config } from './config.js';
+import type { ProjectLanguage } from './project_language.js';
 import type { ParsedFunction } from './parse_function_files.js';
 
-/** The name of the generated index file. */
-export const GENERATED_INDEX_FILE_NAME = 'index.gen.js';
+/** The name of the generated index file, in the project's language. */
+export function getGeneratedIndexFileName(language: ProjectLanguage): string {
+  return `index.gen.${language}`;
+}
 
 type StringTransformer = (text: string) => string;
 
@@ -31,18 +34,30 @@ function toImportPath(filePath: string): string {
   return `./${filePath.replace(/\\/g, '/')}`;
 }
 
+// Typed so each export keeps its function's type. The index signature stops
+// a module without a default export failing to compile, so it reaches the
+// runtime check instead.
+const TYPED_LOAD_SIGNATURE =
+  '<T>(key: string, path: string, importer: () => Promise<{ default?: T; [name: string]: unknown }>): Promise<T> | undefined';
+
+// Declared locally so the TS index compiles without @types/node.
+const TYPED_PROCESS_DECLARATION = 'declare const process: { env: Record<string, string | undefined> };';
+
 // Helpers start with `_` so they can never clash with an export: `camelCase`
-// strips leading underscores, so no export key can start with one.
-function writeSetup(functions: ParsedFunction[], quote: StringTransformer): string {
+// strips leading underscores, so no export key can start with one. The output
+// sticks to ES2017 (no `replaceAll`), the target of Firebase's TS template.
+function writeSetup(functions: ParsedFunction[], quote: StringTransformer, language: ProjectLanguage): string {
   const targetKeys = functions.map(({ exportKey }) => quote(toTargetKey(exportKey))).join(', ');
+  const loadSignature = language === 'ts' ? TYPED_LOAD_SIGNATURE : '(key, path, importer)';
   return [
-    `const _target = (process.env.FUNCTION_TARGET || process.env.K_SERVICE || ${quote('')}).replaceAll(${quote('-')}, ${quote('.')}).toLowerCase();`,
+    ...(language === 'ts' ? [TYPED_PROCESS_DECLARATION, ''] : []),
+    `const _target = (process.env.FUNCTION_TARGET || process.env.K_SERVICE || ${quote('')}).replace(/-/g, ${quote('.')}).toLowerCase();`,
     '',
     `if (_target && ![${targetKeys}].includes(_target)) {`,
     '  throw new Error(`Function "${_target}" not found in index.gen.js. Have you run ffse since adding it?`);',
     '}',
     '',
-    'const _load = (key, path, importer) => !_target || _target === key',
+    `const _load = ${loadSignature} => !_target || _target === key`,
     '  ? importer().then((module) => {',
     '      if (module.default === undefined) {',
     '        throw new Error(`Function at path ${path} has no default export. Did you forget to add "export default" to the function definition?`);',
@@ -76,7 +91,8 @@ function writeExports(exportTree: ExportTree): string {
 /**
  * Generates the index file that exports all functions.
  *
- * Writes a self-contained JS file to the source directory. It reads the
+ * Writes a self-contained file to the source directory, as `index.gen.ts`
+ * with types or `index.gen.js` to match the project's language. It reads the
  * function target from `FUNCTION_TARGET` or `K_SERVICE` and imports only that
  * function's module, or every module in parallel when no target is set (as
  * during deploy discovery). An unknown target throws at import time.
@@ -89,12 +105,14 @@ function writeExports(exportTree: ExportTree): string {
  * @param exportTree - The nested exports, built from `functions` by
  * `buildExportTree()`. Its leaves index into `functions`.
  * @param config - Configuration options affecting output format.
+ * @param language - The project's language, which the generated file matches.
  */
 export async function generateIndexFile(
   preferredSourceDir: string,
   functions: ParsedFunction[],
   exportTree: ExportTree,
   config: Config,
+  language: ProjectLanguage,
 ): Promise<void> {
   if (functions.length === 0) {
     throw new Error('Cannot generate index file: no functions found. This should not be called with an empty function list.');
@@ -104,7 +122,7 @@ export async function generateIndexFile(
 
   const contents = [
     '// GENERATED CODE - DO NOT MODIFY BY HAND',
-    writeSetup(functions, quote),
+    writeSetup(functions, quote, language),
     '',
     writeLoads(functions, quote),
     '',
@@ -112,5 +130,5 @@ export async function generateIndexFile(
     '',
   ].join('\n');
 
-  fs.writeFileSync(join(preferredSourceDir, GENERATED_INDEX_FILE_NAME), contents, 'utf8');
+  fs.writeFileSync(join(preferredSourceDir, getGeneratedIndexFileName(language)), contents, 'utf8');
 }

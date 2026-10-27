@@ -3,7 +3,8 @@ import fs from 'fs';
 import { dirname, resolve } from 'path';
 import { pathToFileURL } from 'url';
 import { buildExportTree } from '../src/build_export_tree.js';
-import { GENERATED_INDEX_FILE_NAME, generateIndexFile } from '../src/generate_index_file.js';
+import type { ProjectLanguage } from '../src/project_language.js';
+import { generateIndexFile, getGeneratedIndexFileName } from '../src/generate_index_file.js';
 import type { ParsedFunction } from '../src/parse_function_files.js';
 import type { Config } from '../src/config.js';
 import { useSandbox } from './helpers/sandbox.js';
@@ -33,8 +34,8 @@ describe('generateIndexFile()', () => {
     process.env = originalEnv;
   });
 
-  function readGeneratedFile() {
-    return fs.readFileSync(resolve(sandbox.path(), GENERATED_INDEX_FILE_NAME), 'utf8');
+  function readGeneratedFile(language: ProjectLanguage = 'js') {
+    return fs.readFileSync(resolve(sandbox.path(), getGeneratedIndexFileName(language)), 'utf8');
   }
 
   /**
@@ -52,14 +53,14 @@ describe('generateIndexFile()', () => {
   }
 
   /** Generates the index for the given functions into the sandbox. */
-  function generate(functions: ParsedFunction[], config: Config = doubleQuoteConfig) {
-    return generateIndexFile(sandbox.path(), functions, buildExportTree(functions), config);
+  function generate(functions: ParsedFunction[], config: Config = doubleQuoteConfig, language: ProjectLanguage = 'js') {
+    return generateIndexFile(sandbox.path(), functions, buildExportTree(functions), config, language);
   }
 
   /** Generates the index for the given functions and imports it. */
   async function generateAndImport(functions: ParsedFunction[], config: Config = doubleQuoteConfig) {
     await generate(functions, config);
-    return import(pathToFileURL(resolve(sandbox.path(), GENERATED_INDEX_FILE_NAME)).href);
+    return import(pathToFileURL(resolve(sandbox.path(), getGeneratedIndexFileName('js'))).href);
   }
 
   function writeExampleFunctions(): ParsedFunction[] {
@@ -214,6 +215,31 @@ describe('generateIndexFile()', () => {
     // Assert
     const content = readGeneratedFile();
     expect(content).to.contain(`_load('auth.oncreate', './auth/onCreate.function.js', () => import('./auth/onCreate.function.js'))`);
-    expect(content).to.contain(`|| '').replaceAll('-', '.')`);
+    expect(content).to.contain(`|| '').replace(/-/g, '.')`);
+  });
+
+  describe('language', () => {
+    it('writes an untyped index.gen.js for a JavaScript project', async () => {
+      // Act
+      await generate([makeParsedFunction('hello', 'hello.function.js')], doubleQuoteConfig, 'js');
+
+      // Assert
+      const content = readGeneratedFile('js');
+      expect(content).to.contain('const _load = (key, path, importer) =>');
+      expect(content).to.not.contain('declare const process');
+      expect(fs.existsSync(resolve(sandbox.path(), 'index.gen.ts'))).to.equal(false);
+    });
+
+    it('writes a typed index.gen.ts for a TypeScript project', async () => {
+      // Act
+      await generate([makeParsedFunction('hello', 'hello.function.js')], doubleQuoteConfig, 'ts');
+
+      // Assert
+      const content = readGeneratedFile('ts');
+      expect(content).to.contain('declare const process: { env: Record<string, string | undefined> };');
+      expect(content).to.contain('const _load = <T>(key: string, path: string, importer: () => Promise<{ default?: T; [name: string]: unknown }>): Promise<T> | undefined =>');
+      expect(content).to.contain('import("./hello.function.js")');
+      expect(fs.existsSync(resolve(sandbox.path(), 'index.gen.js'))).to.equal(false);
+    });
   });
 });
