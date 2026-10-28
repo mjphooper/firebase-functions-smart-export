@@ -5,6 +5,8 @@ import { DEFAULT_MATCH_EXTENSION } from './config.js';
 /**
  * Recursively finds all files matching the extension pattern in the given directory.
  *
+ * `node_modules` is never searched, so `sourceDir` can be the project root.
+ *
  * Paths are rewritten to `.js` because the generated index runs against the
  * compiled output, where all sources resolve to `.js` regardless of authoring.
  *
@@ -22,6 +24,7 @@ export function findFunctionFiles(
   const relativePaths = glob.sync(`**/*.${matchExtension}.[jt]s`, {
     cwd: sourceDir,
     onlyFiles: true,
+    ignore: ['**/node_modules/**'],
   });
 
   const hasTsFiles = relativePaths.some(path => path.endsWith('.ts'));

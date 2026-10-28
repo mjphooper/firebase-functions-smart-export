@@ -483,6 +483,24 @@ describe('cli main()', () => {
     expect(infoStub).to.have.been.calledWithMatch(/Custom config loaded/);
   });
 
+  it('runs with no config on the firebase init JavaScript layout', async () => {
+    // Arrange
+    fs.rmSync(join(projectRoot, 'src'), { recursive: true });
+    writePackageJson({ type: 'module', main: 'index.js' });
+    writeIndexFile('.');
+    writeFunctionFile('hello.function.js', '.', 'export default { id: "hello" };');
+    writeFunctionFile('node_modules/some-package/other.function.js', '.');
+
+    // Act
+    const code = await main({ cwd: projectRoot });
+
+    // Assert
+    expect(code).to.equal(0);
+    expect(readGeneratedIndex('.')).to.not.contain('node_modules');
+    const indexModule = await importGeneratedIndex(projectRoot, '.');
+    expect(indexModule).to.have.keys('hello');
+  });
+
   it('falls back to lib/ as the source directory when src/ does not exist', async () => {
     // Arrange
     fs.rmSync(join(projectRoot, 'src'), { recursive: true });

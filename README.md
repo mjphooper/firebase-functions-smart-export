@@ -67,7 +67,7 @@ npx ffse
 > Consider adding `cd path/to/functions && npx ffse` to the "functions" pre-deployment script in `firebase.json` to automate this process.
 
 
-5. Replace the contents of your `lib/index.js` (or `src/index.ts`) with the line below. Keep the `.js` extension in TypeScript too: under `nodenext`, imports name the compiled file.
+5. Replace the contents of your `index.js` (at the root of your functions folder in the `firebase init` JavaScript template) or `src/index.ts` with the line below. Keep the `.js` extension in TypeScript too: under `nodenext`, imports name the compiled file.
 ```javascript
 export * from './index.gen.js';
 ```
@@ -116,7 +116,7 @@ import { defineConfig } from 'firebase-functions-smart-export';
 export default defineConfig({...});
 ```
 Possible configuration fields are:
-- `sourceDir`: The directory containing your function source files, relative to the project root. For TypeScript projects, this is typically `'src'`. For JavaScript projects, this is typically `'lib'`. If not specified, FFSE will auto-detect by checking for `src/` first, then `lib/`.
+- `sourceDir`: The directory containing your function source files, relative to the project root. For TypeScript projects, this is typically `'src'`. For JavaScript projects, it is the folder holding `index.js`: the project root in the `firebase init` template. If not specified, FFSE auto-detects it by checking for `src/`, then the folder holding your `package.json` `main` entry, then `lib/`. `node_modules` is never searched.
 - `matchExtension`: The file extension used to identify the files containing your functions. This defaults to `"function"`.
 - `ignoreGroups`: A list of groups to exclude from the final function name. This can be used to remove path segments with no semantic value from the exported function name.
 - `maxGroupDepth`: Limits the number of groups in function names.
@@ -125,7 +125,7 @@ Possible configuration fields are:
 - `useSingleQuotes`: Whether to use single quotes `'` (instead of double) in the generated code. Alternatively, you can add `index.gen.js` as an exception in your linter config.
 
 ### Example: Custom source directory
-If your function sources live somewhere other than `src/` or `lib/`:
+If FFSE can't detect your source directory, or picks the wrong one:
 ```javascript
 // ./ffse.config.js
 import { defineConfig } from 'firebase-functions-smart-export';

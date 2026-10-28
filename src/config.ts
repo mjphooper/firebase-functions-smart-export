@@ -10,9 +10,11 @@ export interface Config {
    * The directory containing your function source files, relative to the project root.
    *
    * For TypeScript projects, this is typically `'src'`. For JavaScript projects,
-   * this is typically `'lib'`.
+   * it is the folder holding `index.js`: the project root in the `firebase init`
+   * template.
    *
-   * If not specified, FFSE will auto-detect by checking for `src/` first, then `lib/`.
+   * If not specified, FFSE auto-detects it by checking for `src/`, then the
+   * folder holding the `package.json` `main` entry, then `lib/`.
    */
   sourceDir?: string,
 
