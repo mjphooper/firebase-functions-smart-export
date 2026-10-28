@@ -113,6 +113,20 @@ describe('findFunctionFiles()', () => {
     expect(files).to.have.lengthOf(0);
   });
 
+  it('does not search node_modules', () => {
+    // Arrange
+    const packageDir = path.join(libDir, 'node_modules', 'some-package');
+    fs.mkdirSync(packageDir, { recursive: true });
+    fs.writeFileSync(path.join(packageDir, `a.${DEFAULT_MATCH_EXTENSION}.js`), '');
+    writeFunctionFile();
+
+    // Act
+    const { files } = findFunctionFiles(libDir, DEFAULT_MATCH_EXTENSION);
+
+    // Assert
+    expect(files).to.deep.equal([`test.${DEFAULT_MATCH_EXTENSION}.js`]);
+  });
+
   it('defaults to DEFAULT_MATCH_EXTENSION when none is provided', () => {
     // Arrange
     writeFunctionFile();
