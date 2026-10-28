@@ -34,6 +34,7 @@
   },
   "scripts": {
     "build": "rm -r -f lib && tsc -p tsconfig.build.json",
+    "prepare": "npm run build",
     "test": "npm run build && mocha",
     "coverage": "npm run build && c8 --include=src mocha",
     "lint": "eslint .",
